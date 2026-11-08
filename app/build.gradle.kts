@@ -9,8 +9,8 @@ android {
         applicationId = "com.valtheron.horizon.mobile"
         minSdk = 28
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.1.1"
     }
     buildFeatures { compose = true }
     compileOptions {
@@ -27,4 +27,6 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.coroutines.android)
     implementation("androidx.webkit:webkit:1.13.0")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }
