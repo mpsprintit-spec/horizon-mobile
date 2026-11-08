@@ -9,15 +9,15 @@ android {
         applicationId = "com.valtheron.horizon.mobile"
         minSdk = 28
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.1.1"
+        versionCode = 3
+        versionName = "0.1.2"
     }
     // Debug artifacts from CI use disposable signing keys. Keep the preview
     // package separate, so installing a new test APK cannot erase data in
     // the already installed Horizon Mobile app.
     buildTypes {
         getByName("debug") {
-            applicationIdSuffix = ".preview"
+            applicationIdSuffix = ".visualtest"
         }
     }
     buildFeatures { compose = true }
