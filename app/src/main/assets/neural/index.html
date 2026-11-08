@@ -23,7 +23,7 @@ h1{font-size:clamp(24px,5vw,38px);margin:5px 0 5px;font-weight:760;letter-spacin
 .graph-wrap{position:relative;flex:1;min-height:390px;border:1px solid #15314a;border-radius:17px;overflow:hidden;background:radial-gradient(ellipse 50% 60% at 52% 51%,#0d233e66,#03102111 64%,transparent 90%);isolation:isolate}
 .graph-wrap::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 80px #02101e70;pointer-events:none}
 canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:none}
-.graph-caption{position:absolute;left:16px;top:15px;color:#a5bbd1;font-size:10px;letter-spacing:.12em;pointer-events:none;z-index:2;font-weight:700}
+.connection-badge{display:inline-block;font-size:9px;line-height:1.3;font-weight:800;letter-spacing:.06em;padding:6px 8px;margin-bottom:7px;border:1px solid #476b85;border-radius:20px;background:#06192d;color:#9ab9d2}.connection-badge.good{color:#8ef1cb;border-color:#2f886b}.connection-badge.bad{color:#ffb39f;border-color:#845245}.connection-badge.demo{color:#ffdfa5;border-color:#866a35}.graph-caption{position:absolute;left:16px;top:15px;color:#a5bbd1;font-size:10px;letter-spacing:.12em;pointer-events:none;z-index:2;font-weight:700}
 .graph-caption small{display:block;color:#5f7898;letter-spacing:0;font-size:9px;margin-top:5px;font-weight:400}
 .graph-mode{position:absolute;right:14px;top:15px;text-align:right;font-size:10px;color:#5c9bb5;z-index:2;pointer-events:none}
 .graph-bottom{position:absolute;left:15px;right:15px;bottom:15px;display:flex;align-items:end;justify-content:space-between;z-index:2;pointer-events:none;color:#8ca9c5;font-size:9px;letter-spacing:.06em}
@@ -53,7 +53,7 @@ button:active{transform:scale(.98)}button.active{background:#0f3954;border-color
   <section class="graph-wrap" id="wrap">
     <canvas id="scene" aria-label="Visualisasi interaktif graf neuron Horizon dalam proyeksi tiga dimensi"></canvas>
     <div class="graph-caption">HORIZON / NEURAL GRAPH <small>Topologi nyata · bukan koordinat fisik</small></div>
-    <div class="graph-mode" id="modeNote">RENDER CANVAS 2D<br>PROYEKSI 3D</div>
+    <div class="graph-mode" id="modeNote"><span class="connection-badge waiting" id="connectionBadge">MEMERIKSA DATA</span><br>CANVAS 3D · PROYEKSI</div>
     <div class="empty" id="empty"><strong>Menunggu data Horizon</strong><p>Jalankan canonical Brain Horizon di Termux, atau pilih Contoh untuk menguji tampilan. Contoh bukan data neural Horizon.</p></div>
     <div class="graph-bottom"><div class="legend"><span><i class="dot" style="color:#5bebff;background:#5bebff"></i>Neuron</span><span><i class="dot" style="color:#ad87ff;background:#ad87ff"></i>Sinaps</span><span><i class="dot" style="color:#ffc784;background:#ffc784"></i>Aktivasi</span></div><span>DRAG ROTASI · PINCH ZOOM</span></div>
   </section>
@@ -135,19 +135,52 @@ function setGraph(payload){
  $('empty').style.display=points.length?'none':'block';
  const demo=(payload.mode||'').startsWith('DEMO');renderMode=demo?'demo':'real';
  $('status').textContent=demo?'DATA SIMULASI':(payload.mode||'DATA HORIZON');$('status').className='tag'+(demo?' demo':'');
+ const badge=$('connectionBadge');badge.textContent=demo?'CONTOH · BUKAN HORIZON':'● DATA HORIZON · REV '+String(payload.state_revision??'?');badge.className='connection-badge '+(demo?'demo':'good');
  $('nodeCount').textContent=p.length.toLocaleString('id-ID');$('edgeCount').textContent=l.length.toLocaleString('id-ID');
  $('totalCount').textContent=(payload.counts?.neural_units??p.length).toLocaleString('id-ID');
  $('revision').textContent=String(payload.state_revision??'—').slice(0,12);
  $('sourceLine').textContent=demo?'CONTOH SINTETIS — bukan topologi Horizon. Gunakan Data Horizon untuk melihat struktur nyata.':
   'Brain: '+(payload.brain_identity||'?')+' · '+(payload.coverage||'Snapshot terbatas')+' · Hanya proyeksi 3D topologi, bukan koordinat fisik.';
 }
-function offline(message){if(!points.length){$('empty').style.display='block';$('status').textContent='BELUM TERHUBUNG';$('status').className='tag off';}
- $('sourceLine').textContent=message||'Horizon belum tersedia. Jalankan Bridge Horizon Go di Termux.'}
+function offline(message){
+ const text=message||'Bridge Horizon belum dapat diakses. Periksa Termux dan token aplikasi.';
+ const badge=$('connectionBadge');badge.textContent='● DATA NEURAL BELUM TERSEDIA';badge.className='connection-badge bad';
+ $('status').textContent='INSPEKSI GAGAL';$('status').className='tag off';
+ renderMode='offline';
+ if(!points.length){
+   $('empty').style.display='block';$('empty').querySelector('strong').textContent='Inspeksi neural belum tersedia';
+   $('empty').querySelector('p').textContent=text;
+ } else {
+   // Prevent stale graph from being mistaken for current live telemetry.
+   $('empty').style.display='block';$('empty').querySelector('strong').textContent='Data tidak dapat diperbarui';
+   $('empty').querySelector('p').textContent=text+' · Jaringan di latar adalah snapshot sebelumnya.';
+ }
+ $('sourceLine').textContent=text;
+}
+let loadingReal=false;
 async function fetchReal(force=false){
+ if(loadingReal)return;
+ loadingReal=true;
  $('reload').disabled=true;$('reload').textContent='Membaca…';
- try{const res=await fetch('/api/graph'+(force?'?refresh=1':''),{cache:'no-store'});if(!res.ok){const e=await res.json().catch(()=>({}));throw Error(e.message||('HTTP '+res.status))}
-   const data=await res.json();setGraph(data)}catch(err){if(!points.length){offline('Horizon belum terhubung: '+err.message+' · Contoh hanya tersedia jika dipilih secara manual.');}else{offline('Horizon belum terbaca: '+err.message+' · Data pada layar tidak otomatis dianggap aktual.')}}
- finally{$('reload').disabled=false;$('reload').textContent='↻ Data Horizon'}
+ try{
+   const controller=new AbortController();
+   const timeout=setTimeout(()=>controller.abort(),16000);
+   let res;
+   try{res=await fetch('/api/graph'+(force?'?refresh=1':''),{cache:'no-store',signal:controller.signal})}
+   finally{clearTimeout(timeout)}
+   if(!res.ok){
+      const e=await res.json().catch(()=>({}));
+      throw Error(e.message||('HTTP '+res.status));
+   }
+   const data=await res.json();
+   if(data.status!=='ok')throw Error(data.message||'Bridge belum menghasilkan data valid');
+   setGraph(data);
+ }catch(err){
+   offline('Gagal membaca neuron: '+(err.name==='AbortError'?'Permintaan melampaui 16 detik':err.message));
+ }finally{
+   loadingReal=false;
+   $('reload').disabled=false;$('reload').textContent='↻ Data Horizon';
+ }
 }
 function demoData(){
   // Offline deterministic fixture: unambiguously labeled DEMO, never Horizon data.
@@ -244,8 +277,9 @@ function release(e){pointers.delete(e.pointerId);if(pointers.size<2)pinchLast=0;
 canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
 canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=bound(zoom*(e.deltaY>0?.91:1.09),.5,2.2);$('zoom').value=Math.round(zoom*100)},{passive:false});
 fetchReal();
-// Poll only when a real canonical Brain is being displayed. Bounded inspection has real cost.
-refreshHandle=setInterval(()=>{if(renderMode==='real' && !document.hidden)fetchReal(false)},20000);
+// Retry even after initial offline state. Demo remains manual and never polls.
+// Only a single bounded read occurs per interval; no cross-revision pagination.
+refreshHandle=setInterval(()=>{if(renderMode!=='demo' && !document.hidden)fetchReal(false)},15000);
 </script>
 </body>
 </html>
