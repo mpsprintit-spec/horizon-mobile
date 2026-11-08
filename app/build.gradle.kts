@@ -12,6 +12,14 @@ android {
         versionCode = 2
         versionName = "0.1.1"
     }
+    // Debug artifacts from CI use disposable signing keys. Keep the preview
+    // package separate, so installing a new test APK cannot erase data in
+    // the already installed Horizon Mobile app.
+    buildTypes {
+        getByName("debug") {
+            applicationIdSuffix = ".preview"
+        }
+    }
     buildFeatures { compose = true }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
