@@ -60,3 +60,13 @@ Android/Jetpack Compose scaffold diadaptasi secara selektif dari [GPTMobile](htt
 Build **debug** dipaketkan sebagai `com.valtheron.horizon.mobile.preview` dan berlabel **Horizon Mobile Uji**. APK debug GitHub Actions menggunakan signing key temporer; menginstal versi baru dengan applicationId utama dapat menyebabkan `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, dan uninstall aplikasi asli dapat menghapus riwayat lokal.
 
 Versi Uji bisa dipasang **berdampingan** dengan aplikasi lama. Ia berbagi runtime Go pada `127.0.0.1:8765` tetapi menyimpan pengaturan dan chat uji secara terpisah. Untuk rilis utama, sediakan signing key yang stabil secara aman (jangan commit private key ke repository).
+
+## v0.1.2 — Proyeksi jalur aktivitas neural pada Canvas 3D
+
+Visualisasi kini memuat `activation`, `dynamic.activation`, waktu aktivasi unit/sinaps, bobot serta confidence dari halaman inspeksi *yang sama* dengan topologi. Sinaps berarah sumber → target digambar sebagai garis asli, dan hingga 160 jalur dengan indikasi aktivitas tertinggi diberi animasi cahaya. Warna sian adalah koneksi biasa, amber adalah inhibisi. Tombol **Jalur Aktivitas** mengaktifkan/menonaktifkan lapisan, **Jeda** menghentikan animasi, dan **Data Horizon** membaca snapshot lagi.
+
+**Ketepatan ilmiah:** Jalur yang dipilih dihitung dengan proksi `max(activation_sinaps, dynamic_activation_sinaps, activation_neuron_sumber × |weight_sinaps| × confidence_sinaps)`, dipotong pada [0,1]. Ini hanya indikator aktivitas/kekuatan koneksi dari **satu snapshot**. Arah berasal dari ID synapse yang sebenarnya, tetapi *posisi 3D, kecepatan titik, fase dan jumlah paket* **bukan** data temporal transmisi neural, dan tidak boleh ditafsirkan sebagai pengukuran sinyal fisik atau event neural individual. Bila proksi semua jalur di bawah ambang, tidak ada titik bergerak yang direkayasa.
+
+Monitor mengambil hanya koneksi di antara neuron terpilih pada satu halaman inspeksi; banyak koneksi lain bisa tidak terlihat. Bridge Horizon perlu menambahkan observabilitas event/jalur neural yang benar-benar instrumented agar dapat menampilkan setiap transmisi aktual; fitur itu **belum ada**. Runtime dan penyimpanan canonical Brain tidak dimodifikasi untuk visualisasi ini.
+
+APK debug ini menggunakan package `com.valtheron.horizon.mobile.visualtest` supaya dapat dipasang tanpa mengganti dan menghapus data aplikasi sebelumnya. Label: **Horizon Mobile Aktivitas**.
