@@ -80,7 +80,7 @@ const $ = id=>document.getElementById(id);
 const canvas=$('scene'),ctx=canvas.getContext('2d',{alpha:true,desynchronized:false});
 let W=1,H=1,DPR=1,graph=null,points=[],links=[],renderMode='offline';
 let rotating=true,showEdges=true,showFlow=true,paused=false,viewDensity=1,zoom=1;
-let flowPaths=[],sampleAtMs=0;
+let flowPaths=[],sampleAtMs=0,flowClockMs=0;
 let yaw=.4,pitch=.18,lastFrame=0,iter=0,fitScale=1;
 let isDragging=false,pointers=new Map(),pinchLast=0,refreshHandle=null;
 const palette=['#5ce6ff','#ac8cff','#69edcc','#ffd08a','#7eb6ff','#ff93c4'];
@@ -118,7 +118,30 @@ function setGraph(payload){
    index.set(id,p.length);p.push({id,x:pos[0],y:pos[1],z:pos[2],vx:0,vy:0,vz:0,activation:bound(Number(u.activation)||0,0,1),importance:bound(Number(u.importance)||0,0,1),module:0});
  }
  const l=[];
- for(const e of payload.edges){const a=index.get(String(e.s)),b=index.get(String(e.t));if(a===undefined||b===undefined||a===b)continue;l.push({a,b,w:bound(Math.abs(Number(e.w)||.3),.01,5),confidence:bound(Number(e.conf)||.5,0,1),inh:!!e.inhibitory})}
+ for(const e of payload.edges){
+   const a=index.get(String(e.s)),b=index.get(String(e.t));
+   if(a===undefined||b===undefined||a===b)continue;
+   const w=Math.abs(Number(e.w)),conf=Number(e.conf);
+   const raw=Number(e.activation),dynamic=Number(e.dynamic_activation);
+   l.push({a,b,s:String(e.s),t:String(e.t),
+     w:Number.isFinite(w)?bound(w,0,5):0,
+     confidence:Number.isFinite(conf)?bound(conf,0,1):0,
+     // These are recorded substrate scalars, not timestamps of axonal spikes.
+     synapticActivity:Math.max(Number.isFinite(raw)?raw:0,Number.isFinite(dynamic)?dynamic:0,0),
+     inh:!!e.inhibitory});
+ }
+ // Directed potential paths follow REAL synapses. Pulse speed/phase below
+ // are illustration only. No inferred packet, timing or message is added.
+ flowPaths=l.map((e,i)=>{
+   const sourceActivity=p[e.a].activation;
+   const proxy=bound(Math.max(e.synapticActivity,sourceActivity*e.w*e.confidence),0,1);
+   return {i,score:proxy};
+ }).filter(x=>x.score>=.04).sort((a,b)=>b.score-a.score).slice(0,160);
+ sampleAtMs=Date.now();flowClockMs=0;
+ $('flowBadge').textContent=flowPaths.length?
+   'JALUR POTENSIAL: '+flowPaths.length+' / '+l.length:
+   'TIDAK ADA INDIKASI JALUR AKTIF';
+
  // Community label propagation: color groups emerge from observed edges.
  const neighbors=p.map(()=>[]);for(const e of l){neighbors[e.a].push(e.b);neighbors[e.b].push(e.a)}
  let labels=p.map((_,i)=>i);
@@ -141,11 +164,14 @@ function setGraph(payload){
  $('totalCount').textContent=(payload.counts?.neural_units??p.length).toLocaleString('id-ID');
  $('revision').textContent=String(payload.state_revision??'—').slice(0,12);
  $('sourceLine').textContent=demo?'CONTOH SINTETIS — bukan topologi Horizon. Gunakan Data Horizon untuk melihat struktur nyata.':
-  'Brain: '+(payload.brain_identity||'?')+' · '+(payload.coverage||'Snapshot terbatas')+' · Hanya proyeksi 3D topologi, bukan koordinat fisik.';
+  'Brain: '+(payload.brain_identity||'?')+' · '+(payload.coverage||'Snapshot terbatas')+
+  ' · Titik bergerak = visualisasi potensi jalur dari nilai aktivasi/bobot, BUKAN paket sinyal terukur.';
 }
 function offline(message){
  const text=message||'Bridge Horizon belum dapat diakses. Periksa Termux dan token aplikasi.';
  const badge=$('connectionBadge');badge.textContent='● DATA NEURAL BELUM TERSEDIA';badge.className='connection-badge bad';
+ $('flowBadge').textContent='JALUR TIDAK TERVERIFIKASI';
+ flowPaths=[]; // Do not replay motion on stale data.
  $('status').textContent='INSPEKSI GAGAL';$('status').className='tag off';
  renderMode='offline';
  if(!points.length){
@@ -242,6 +268,31 @@ function draw(){ctx.clearRect(0,0,W,H);if(!points.length)return;
   }
  }
  ctx.globalCompositeOperation='lighter';
+ // Show directional light travel only on edges supported by actual telemetry.
+ // It is a visual *proxy* of a sampled activity state, not real signal timing.
+ if(showEdges && showFlow && renderMode!=='offline'){
+   for(const route of flowPaths){
+      const e=links[route.i],a=proj[e.a],b=proj[e.b];
+      if(!a||!b||rand(route.i*331+183)>viewDensity)continue;
+      const energy=route.score,alpha=bound(.13+.68*energy,.12,.76);
+      ctx.strokeStyle=e.inh?'rgba(255,184,101,'+alpha+')':'rgba(80,233,255,'+alpha+')';
+      ctx.lineWidth=(1+2.4*energy)*Math.min(1.5,zoom);
+      ctx.globalAlpha=1;
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+      // The synapse is source -> target, including inhibitory synapses.
+      const phase=((flowClockMs*.00025*(.8+energy)+rand(hash(e.s+':'+e.t)))%1);
+      const x=a.x+(b.x-a.x)*phase,y=a.y+(b.y-a.y)*phase;
+      const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;
+      const length=bound(6+energy*15,6,19);
+      ctx.strokeStyle=e.inh?'rgba(255,220,153,'+alpha+')':'rgba(200,250,255,'+alpha+')';
+      ctx.lineWidth=bound(1.3+energy*1.9,1,3.5);
+      ctx.beginPath();ctx.moveTo(x-dx/len*length,y-dy/len*length);ctx.lineTo(x,y);ctx.stroke();
+      const sz=(9+energy*10)*Math.sqrt(zoom);
+      ctx.globalAlpha=alpha;
+      ctx.drawImage(sprites[e.inh?3:0],x-sz*.5,y-sz*.5,sz,sz);
+   }
+ }
+ ctx.globalAlpha=1;
  // Depth sorting: near nodes appear over distant connections.
  const drawOrder=proj.map((v,i)=>i).sort((a,b)=>rot[a].z-rot[b].z);
  for(const i of drawOrder){if(rand(i*911+41)>viewDensity)continue;
@@ -253,7 +304,7 @@ function draw(){ctx.clearRect(0,0,W,H);if(!points.length)return;
  ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over'
 }
 function animate(t){const dt=Math.min(50,t-lastFrame||16);lastFrame=t;
- if(!paused){if(rotating)yaw+=dt*.00011; // camera motion only; not artificial neural firing
+ if(!paused){flowClockMs+=dt;if(rotating)yaw+=dt*.00011; // camera motion only; not artificial neural firing
   if(iter<130)for(let k=0;k<2;k++)relax()}
  draw();requestAnimationFrame(animate)
 }
@@ -262,6 +313,7 @@ function setToggle(button,value){button.classList.toggle('active',value)}
 $('demo').onclick=()=>demoData();$('reload').onclick=()=>fetchReal(true);
 $('rotate').onclick=()=>{rotating=!rotating;setToggle($('rotate'),rotating)};
 $('edges').onclick=()=>{showEdges=!showEdges;setToggle($('edges'),showEdges)};
+$('flow').onclick=()=>{showFlow=!showFlow;setToggle($('flow'),showFlow)};
 $('pause').onclick=()=>{paused=!paused;setToggle($('pause'),paused);$('pause').textContent=paused?'▶ Lanjut':'Ⅱ Jeda'};
 $('density').oninput=e=>{viewDensity=Number(e.target.value)/100};
 $('zoom').oninput=e=>{zoom=Number(e.target.value)/100};
