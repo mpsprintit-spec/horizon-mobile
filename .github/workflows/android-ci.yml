@@ -20,7 +20,7 @@ jobs:
           TOOL="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           if [ ! -x "$TOOL" ]; then TOOL="$(command -v sdkmanager)"; fi
           yes | "$TOOL" --licenses >/dev/null || true
-          "$TOOL" --install "platforms;android-36" "build-tools;36.0.0"
+          "$TOOL" --install "platforms;android-37" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew :app:assembleDebug --stacktrace
       - uses: actions/upload-artifact@v4
