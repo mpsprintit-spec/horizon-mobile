@@ -133,6 +133,7 @@ internal fun inspectionPageToGraph(page: JSONObject): JSONObject {
                 .put("activation", safeFinite(unit.optDouble("activation")))
                 .put("importance", safeFinite(unit.optDouble("importance")))
                 .put("plasticity", safeFinite(unit.optDouble("plasticity")))
+                .put("last_activation", unit.optString("last_activation"))
                 .put("representation", vector)
         )
     }
@@ -152,6 +153,12 @@ internal fun inspectionPageToGraph(page: JSONObject): JSONObject {
         edges.put(
             JSONObject().put("s", source).put("t", target)
                 .put("w", weight).put("conf", confidence)
+                .put("activation", safeFinite(edge.optDouble("activation")))
+                .put("dynamic_activation", safeFinite(
+                    edge.optJSONObject("dynamic")?.optDouble("activation") ?: 0.0
+                ))
+                .put("last_activation", edge.optString("last_activation"))
+                .put("dynamic_last_activation", edge.optJSONObject("dynamic")?.optString("last_activation") ?: "")
                 .put("inhibitory", inhibitory)
         )
     }
@@ -166,6 +173,7 @@ internal fun inspectionPageToGraph(page: JSONObject): JSONObject {
         .put("mode", "BRIDGE · REAL")
         .put("brain_identity", page.getString("brain_identity"))
         .put("state_revision", revision)
+        .put("captured_at", page.optString("captured_at"))
         .put("inspection_epoch", page.getString("inspection_epoch"))
         .put("counts", JSONObject()
             .put("neural_units", totalUnits)
