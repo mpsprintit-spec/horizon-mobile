@@ -23,7 +23,7 @@ h1{font-size:clamp(24px,5vw,38px);margin:5px 0 5px;font-weight:760;letter-spacin
 .graph-wrap{position:relative;flex:1;min-height:390px;border:1px solid #15314a;border-radius:17px;overflow:hidden;background:radial-gradient(ellipse 50% 60% at 52% 51%,#0d233e66,#03102111 64%,transparent 90%);isolation:isolate}
 .graph-wrap::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 80px #02101e70;pointer-events:none}
 canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:none}
-.connection-badge{display:inline-block;font-size:9px;line-height:1.3;font-weight:800;letter-spacing:.06em;padding:6px 8px;margin-bottom:7px;border:1px solid #476b85;border-radius:20px;background:#06192d;color:#9ab9d2}.connection-badge.good{color:#8ef1cb;border-color:#2f886b}.connection-badge.bad{color:#ffb39f;border-color:#845245}.connection-badge.demo{color:#ffdfa5;border-color:#866a35}.graph-caption{position:absolute;left:16px;top:15px;color:#a5bbd1;font-size:10px;letter-spacing:.12em;pointer-events:none;z-index:2;font-weight:700}
+.flow-info{font-size:9px;line-height:1.5;color:#80b7c7;letter-spacing:.025em;display:block;margin-top:4px}.flow-hot{color:#79eff5}.connection-badge{display:inline-block;font-size:9px;line-height:1.3;font-weight:800;letter-spacing:.06em;padding:6px 8px;margin-bottom:7px;border:1px solid #476b85;border-radius:20px;background:#06192d;color:#9ab9d2}.connection-badge.good{color:#8ef1cb;border-color:#2f886b}.connection-badge.bad{color:#ffb39f;border-color:#845245}.connection-badge.demo{color:#ffdfa5;border-color:#866a35}.graph-caption{position:absolute;left:16px;top:15px;color:#a5bbd1;font-size:10px;letter-spacing:.12em;pointer-events:none;z-index:2;font-weight:700}
 .graph-caption small{display:block;color:#5f7898;letter-spacing:0;font-size:9px;margin-top:5px;font-weight:400}
 .graph-mode{position:absolute;right:14px;top:15px;text-align:right;font-size:10px;color:#5c9bb5;z-index:2;pointer-events:none}
 .graph-bottom{position:absolute;left:15px;right:15px;bottom:15px;display:flex;align-items:end;justify-content:space-between;z-index:2;pointer-events:none;color:#8ca9c5;font-size:9px;letter-spacing:.06em}
@@ -52,8 +52,8 @@ button:active{transform:scale(.98)}button.active{background:#0f3954;border-color
   <section class="intro"><div><div class="overline">NEURAL TOPOLOGY / 01</div><h1>One <span>Neural Graph.</span></h1><p class="desc">Bukan otak biologis. Susunan 3D tumbuh dari representasi numerik dan hubungan sinaps dalam satu canonical Brain.</p></div></section>
   <section class="graph-wrap" id="wrap">
     <canvas id="scene" aria-label="Visualisasi interaktif graf neuron Horizon dalam proyeksi tiga dimensi"></canvas>
-    <div class="graph-caption">HORIZON / NEURAL GRAPH <small>Topologi nyata · bukan koordinat fisik</small></div>
-    <div class="graph-mode" id="modeNote"><span class="connection-badge waiting" id="connectionBadge">MEMERIKSA DATA</span><br>CANVAS 3D · PROYEKSI</div>
+    <div class="graph-caption">HORIZON / NEURAL GRAPH <small>Jalur berarah dari sinaps nyata · posisi adalah proyeksi</small></div>
+    <div class="graph-mode" id="modeNote"><span class="connection-badge waiting" id="connectionBadge">MEMERIKSA DATA</span><br><span id="flowBadge">JALUR: BELUM TERUKUR</span><span class="flow-info">Animasi = proyeksi intensitas aktivasi<br>bukan paket listrik terukur</span></div>
     <div class="empty" id="empty"><strong>Menunggu data Horizon</strong><p>Jalankan canonical Brain Horizon di Termux, atau pilih Contoh untuk menguji tampilan. Contoh bukan data neural Horizon.</p></div>
     <div class="graph-bottom"><div class="legend"><span><i class="dot" style="color:#5bebff;background:#5bebff"></i>Neuron</span><span><i class="dot" style="color:#ad87ff;background:#ad87ff"></i>Sinaps</span><span><i class="dot" style="color:#ffc784;background:#ffc784"></i>Aktivasi</span></div><span>DRAG ROTASI · PINCH ZOOM</span></div>
   </section>
@@ -66,7 +66,7 @@ button:active{transform:scale(.98)}button.active{background:#0f3954;border-color
   <section class="controls">
     <div class="actions">
       <button id="demo" class="highlight">Contoh</button><button id="reload">↻ Data Horizon</button>
-      <button id="rotate" class="active">⟳ Rotasi</button><button id="edges" class="active">⌁ Sinaps</button><button id="pause">Ⅱ Jeda</button><button id="reset">◎ Reset</button>
+      <button id="rotate" class="active">⟳ Rotasi</button><button id="edges" class="active">⌁ Sinaps</button><button id="flow" class="active">⇢ Jalur Aktivitas</button><button id="pause">Ⅱ Jeda</button><button id="reset">◎ Reset</button>
     </div>
     <div class="ranges"><label>Kepadatan <input id="density" type="range" min="15" max="100" value="100" /></label><label>Zoom <input id="zoom" type="range" min="50" max="220" value="100" /></label></div>
   </section>
@@ -79,7 +79,8 @@ button:active{transform:scale(.98)}button.active{background:#0f3954;border-color
 const $ = id=>document.getElementById(id);
 const canvas=$('scene'),ctx=canvas.getContext('2d',{alpha:true,desynchronized:false});
 let W=1,H=1,DPR=1,graph=null,points=[],links=[],renderMode='offline';
-let rotating=true,showEdges=true,paused=false,viewDensity=1,zoom=1;
+let rotating=true,showEdges=true,showFlow=true,paused=false,viewDensity=1,zoom=1;
+let flowPaths=[],sampleAtMs=0;
 let yaw=.4,pitch=.18,lastFrame=0,iter=0,fitScale=1;
 let isDragging=false,pointers=new Map(),pinchLast=0,refreshHandle=null;
 const palette=['#5ce6ff','#ac8cff','#69edcc','#ffd08a','#7eb6ff','#ff93c4'];
