@@ -4,7 +4,7 @@ plugins {
 }
 android {
     namespace = "com.valtheron.horizon.mobile"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         applicationId = "com.valtheron.horizon.mobile"
         minSdk = 28
