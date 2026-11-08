@@ -1,38 +1,45 @@
 # Horizon Mobile
 
-A native Android application for **one canonical Horizon Brain**.
+**Horizon Mobile** adalah klien Android native untuk **satu canonical Brain Horizon**.
 
-- Unique Android application ID: `com.valtheron.horizon.mobile`
-- Visible name: **Horizon Mobile**
-- Chat screen uses Horizon's numeric observation bridge; it does not pretend that
-  numeric answer metadata is natural-language text.
-- Brain screen embeds the user's previously approved neural topology monitor in a
-  local WebView; start the Python Canvas adapter in Termux at `http://127.0.0.1:8897`.
-- Memory screen reads bounded canonical inspection counts.
-- No account login and no external AI provider is required.
-- Horizon Brain remains the sole owner of weights, memories, checkpoints and learning.
-- No code changes in the core Horizon repository.
+## Status implementasi
+- Nama aplikasi: **Horizon Mobile**
+- Android application ID: `com.valtheron.horizon.mobile` (independen dari aplikasi lain)
+- Antarmuka: Compose dark theme hitam–cyan–ungu, Chat, Neuron, Memori, Pengaturan
+- Chat: mengirim `ObservationEnvelope` dengan token bahasa ke Bridge Go lokal; balasan adalah metadata neural native, **belum generasi kalimat alami**
+- Neuron: renderer **HTML Canvas 3D** yang sudah disetujui dibundel sebagai asset APK; data nyata diambil melalui Kotlin `NeuralGraphGateway` secara read-only dari bounded inspection API Horizon
+- Memori: ringkasan total neuron, sinaps, identitas Brain, dan revisi secara read-only
+- Tidak ada mode API model AI eksternal, model GPT, login provider, atau kunci layanan cloud
+- `main` pada repository `horizon-artificial-brain` tidak diubah
 
-## Local services (on the same Android device)
+## Menjalankan
+1. Jalankan runtime **Go Horizon** di perangkat yang sama melalui Termux dengan Bridge pada `127.0.0.1:8765`. Untuk konfigurasi yang memerlukan autentikasi, isi token di layar Pengaturan.
+2. Pasang APK Horizon Mobile dan buka.
+3. Layar Neuron memakai Canvas internal APK. **Tidak diperlukan server Python atau browser Chrome.** Data diperbarui melalui permintaan inspeksi read-only; bukan setiap frame komputasi neuron.
+4. Jika runtime tidak menyala, status OFFLINE ditampilkan. Pilihan **Contoh** pada monitor adalah data simulasi manual, bukan data Horizon.
 
-1. Start the existing Horizon Go runtime with its bridge on `127.0.0.1:8765`.
-2. Start the previously delivered Python neural-graph adapter with `python server.py`.
-3. Open Horizon Mobile: Chat, Brain, Memory, Settings.
+Batasan penting: posisi titik 3D adalah proyeksi matematis representasi dan topologi sinaps, **bukan koordinat fisik**. Jumlah neuron/sinaps tampak adalah sampel dibatasi; selalu dibedakan dari jumlah total. Endpoint Bridge Go saat ini mengembalikan status, ID neuron dan confidence, bukan paragraf jawaban. Aplikasi tidak mengarang teks bahasa alami.
 
-The Android app talks only to local loopback addresses. The Bridge bearer token,
-if used, can be entered in the app's Settings page. Never expose the local bridge
-to the public internet without proper authentication and transport security.
+## Arsitektur
+```
+Horizon Go canonical Brain (Termux)
+      │  127.0.0.1:8765
+      ├── POST /v1/observations  → Chat numerik native
+      └── GET  /v1/brain/inspection → Kotlin bounded sampling
+                                      │
+                         HTML + Canvas yang dibundel
+                         di WebView origin lokal tepercaya
+```
 
-### Build
+- WebView memuat HTML dari `app/src/main/assets/neural/index.html` melalui `WebViewAssetLoader`.
+- Permintaan internal `/api/graph` ditangani langsung Kotlin, bukan oleh server publik.
+- Browser WebView tidak diberi hak akses file atau kemampuan mengakses host di luar origin internal aplikasi.
+- Bridge terikat pada localhost dan diperlakukan sebagai sumber tunggal untuk data neural.
 
-Open the repository using Android Studio with a compatible Android SDK and
-Gradle 9.4.1. Run `./gradlew :app:assembleDebug` after ensuring the
-Gradle wrapper jar is installed. This branch has **not** yet been verified with
-an Android SDK build on a physical device.
+## Build dan pengujian
 
-### License and origin
+Jalankan `./gradlew :app:assembleDebug` menggunakan JDK 17 dan Android SDK 36. GitHub Actions menyediakan workflow build debug serta APK pada artefak workflow yang sukses. PR ini tetap draft hingga ada uji fungsional pada perangkat Android dan koneksi real ke runtime Horizon.
 
-Android/Compose project setup is adapted from the GPL-3.0 licensed
-[GPTMobile](https://github.com/Taewan-P/gpt_mobile) project. The user-facing
-brand and operating mode are independently designed for Horizon. Source
-attribution and the GPL-3.0 license are preserved in NOTICE.md and LICENSE.
+## Keaslian kode dan lisensi
+
+Android/Jetpack Compose scaffold diadaptasi secara selektif dari [GPTMobile](https://github.com/Taewan-P/gpt_mobile) karya Taewan-P dan para kontributor, berlisensi GNU GPL-3.0. Lisensi dan atribusi hukum tetap ada dalam `LICENSE` dan `NOTICE.md`. Bagian itu adalah dokumentasi kepatuhan sumber, **bukan branding aplikasi**.
