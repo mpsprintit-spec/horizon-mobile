@@ -2,11 +2,12 @@ package com.valtheron.horizon.mobile
 
 import android.content.Context
 import android.os.Bundle
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,8 +28,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -45,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -62,11 +62,12 @@ import java.net.URL
 import java.time.Instant
 import java.util.UUID
 
-private val Ink = Color(0xFF050B15)
-private val Panel = Color(0xFF0F2032)
-private val Cyan = Color(0xFF73E4EF)
-private val Muted = Color(0xFF91AFC8)
-private val White = Color(0xFFE5F6FD)
+private val Ink = Color(0xFF030915)
+private val Panel = Color(0xFF0B192D)
+private val Cyan = Color(0xFF6FE7F6)
+private val Muted = Color(0xFF88A5C4)
+private val White = Color(0xFFE8F6FF)
+private val Purple = Color(0xFFA48AFE)
 private val MobileColors = darkColorScheme(
     primary = Cyan, onPrimary = Ink, background = Ink, onBackground = White,
     surface = Panel, onSurface = White, secondary = Muted
@@ -75,7 +76,7 @@ private val MobileColors = darkColorScheme(
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = android.graphics.Color.rgb(5, 11, 21)
+        window.statusBarColor = android.graphics.Color.rgb(3, 9, 21)
         window.navigationBarColor = android.graphics.Color.rgb(5, 11, 21)
         setContent { MaterialTheme(colorScheme = MobileColors) { HorizonMobileApp() } }
     }
@@ -85,36 +86,86 @@ private data class ChatEntry(val id: String, val isUser: Boolean, val text: Stri
 
 @Composable
 private fun HorizonMobileApp() {
+    val context = LocalContext.current
     var page by rememberSaveable { mutableStateOf(0) }
-    val tabs = listOf("Percakapan", "Neuron", "Memori", "Pengaturan")
+    var connected by remember { mutableStateOf<Boolean?>(null) }
+    val tabs = listOf("Chat", "Neuron", "Memori", "Setelan")
+    val symbols = listOf("◈", "✧", "▤", "⚙")
+
+    LaunchedEffect(page) {
+        connected = withContext(Dispatchers.IO) {
+            runCatching { HorizonBridge.health(context).startsWith("Tersambung") }
+                .getOrDefault(false)
+        }
+    }
     Scaffold(
         containerColor = Ink,
         topBar = {
             Row(
-                modifier = Modifier.fillMaxWidth().background(Ink).padding(18.dp),
+                modifier = Modifier.fillMaxWidth()
+                    .background(Brush.horizontalGradient(listOf(Color(0xFF07172A), Ink)))
+                    .padding(horizontal = 16.dp, vertical = 13.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(11.dp)
             ) {
-                Column {
-                    Text("HORIZON MOBILE", color = White, fontWeight = FontWeight.Bold)
-                    Text("ONE CANONICAL BRAIN", color = Cyan, style = MaterialTheme.typography.labelSmall)
+                Box(
+                    modifier = Modifier.size(42.dp)
+                        .border(1.dp, Color(0xFF265877), RoundedCornerShape(14.dp))
+                        .background(Brush.linearGradient(listOf(Color(0xFF142A49), Color(0xFF0A1529))), RoundedCornerShape(14.dp)),
+                    contentAlignment = Alignment.Center
+                ) { Text("✧", color = Cyan, style = MaterialTheme.typography.headlineMedium) }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("HORIZON MOBILE", color = White, fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium)
+                    Text("ONE CANONICAL BRAIN", color = Cyan,
+                        style = MaterialTheme.typography.labelSmall)
                 }
-                Text("LOCAL", color = Muted, style = MaterialTheme.typography.labelSmall)
+                Box(
+                    modifier = Modifier
+                        .border(1.dp, if (connected == true) Color(0xFF287566) else Color(0xFF35516A), CircleShape)
+                        .background(Color(0xFF091D30), CircleShape)
+                        .padding(horizontal = 10.dp, vertical = 7.dp)
+                ) {
+                    Text(
+                        if (connected == true) "● LIVE" else if (connected == false) "○ OFFLINE" else "○ CEK",
+                        color = if (connected == true) Color(0xFF8AF3CD) else Muted,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
             }
         },
         bottomBar = {
-            NavigationBar(containerColor = Panel) {
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .background(Color(0xFF081529))
+                    .padding(horizontal = 10.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
                 tabs.forEachIndexed { index, label ->
-                    NavigationBarItem(
-                        selected = page == index, onClick = { page = index },
-                        icon = { Text(listOf("◈", "✧", "▤", "⚙")[index]) },
-                        label = { Text(label, maxLines = 1) }
-                    )
+                    Column(
+                        modifier = Modifier.weight(1f)
+                            .background(
+                                if (page == index) Color(0xFF153451) else Color.Transparent,
+                                RoundedCornerShape(14.dp)
+                            )
+                            .clickable { page = index }
+                            .padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(symbols[index], color = if (page == index) Cyan else Muted,
+                            style = MaterialTheme.typography.titleMedium)
+                        Text(label, color = if (page == index) White else Muted,
+                            style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                    }
                 }
             }
         }
     ) { pad ->
-        Box(Modifier.fillMaxSize().padding(pad)) {
+        Box(
+            Modifier.fillMaxSize().padding(pad)
+                .background(Brush.verticalGradient(listOf(Color(0xFF061426), Ink, Color(0xFF040915))))
+        ) {
             when (page) {
                 0 -> ChatPage()
                 1 -> NeuronPage()
@@ -144,19 +195,28 @@ private fun ChatPage() {
         }
     }
     Column(Modifier.fillMaxSize().padding(horizontal = 14.dp)) {
-        Text(
-            "Percakapan ini diproses oleh Horizon. Respons berupa hasil native neural, " +
-                "bukan teks yang direka oleh model lain.",
-            color = Muted,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(bottom = 12.dp)
-        )
+        Row(
+            Modifier.fillMaxWidth().padding(top = 11.dp, bottom = 8.dp)
+                .background(Color(0xFF0C2035), RoundedCornerShape(13.dp))
+                .padding(horizontal = 13.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            Text("◆", color = Purple)
+            Column {
+                Text("Horizon Native Interface", color = White,
+                    style = MaterialTheme.typography.labelLarge)
+                Text("Respons numerik asli · tanpa model percakapan eksternal",
+                    color = Muted, style = MaterialTheme.typography.labelSmall)
+            }
+        }
         LazyColumn(
             state = listState,
             modifier = Modifier.weight(1f).fillMaxWidth(),
             contentPadding = PaddingValues(vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            if (messages.isEmpty() && !busy) item { ChatWelcome() }
             items(messages, key = { it.id }) { message -> ChatBubble(message) }
             if (busy) {
                 item {
@@ -175,7 +235,7 @@ private fun ChatPage() {
             OutlinedTextField(
                 value = prompt, onValueChange = { prompt = it },
                 modifier = Modifier.weight(1f),
-                label = { Text("Pesan untuk Horizon") },
+                label = { Text("Tulis observasi ke Horizon...") },
                 maxLines = 5,
                 enabled = !busy
             )
@@ -202,6 +262,49 @@ private fun ChatPage() {
 }
 
 @Composable
+private fun ChatWelcome() {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 45.dp, bottom = 30.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            Modifier.size(100.dp)
+                .border(1.dp, Color(0xFF326987), CircleShape)
+                .background(
+                    Brush.radialGradient(listOf(Color(0xFF205B80), Color(0xFF0E2039), Ink)),
+                    CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) { Text("✧", color = Cyan, style = MaterialTheme.typography.displayLarge) }
+        Text("ONE NEURAL BRAIN", color = Cyan, style = MaterialTheme.typography.labelSmall)
+        Text("Selamat datang\ndi Horizon.", color = White,
+            style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Text("Satu jaringan kecerdasan. Pengamatan dan respons diproses\n" +
+            "oleh runtime neural lokal yang sama.",
+            color = Muted, style = MaterialTheme.typography.bodyMedium,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Row(
+            modifier = Modifier.padding(top = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MiniChip("GO NATIVE", Cyan)
+            MiniChip("LOCAL ONLY", Purple)
+        }
+    }
+}
+
+@Composable
+private fun MiniChip(label: String, tint: Color) {
+    Box(
+        Modifier.border(1.dp, tint.copy(alpha = .45f), RoundedCornerShape(40.dp))
+            .background(Color(0xFF0B1A30), RoundedCornerShape(40.dp))
+            .padding(horizontal = 11.dp, vertical = 7.dp)
+    ) { Text(label, color = tint, style = MaterialTheme.typography.labelSmall) }
+}
+
+@Composable
 private fun ChatBubble(message: ChatEntry) {
     Row(
         Modifier.fillMaxWidth(),
@@ -209,9 +312,9 @@ private fun ChatBubble(message: ChatEntry) {
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(0.90f),
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(18.dp),
             colors = CardDefaults.cardColors(
-                containerColor = if (message.isUser) Color(0xFF163B57) else Panel
+                containerColor = if (message.isUser) Color(0xFF193D5C) else Color(0xFF101B34)
             )
         ) {
             Text(
@@ -226,23 +329,21 @@ private fun ChatBubble(message: ChatEntry) {
 @Composable
 private fun NeuronPage() {
     Column(Modifier.fillMaxSize()) {
-        Text(
-            "Jaringan neural asli · WebView lokal · tanpa bentuk biologis",
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
-            color = Muted, style = MaterialTheme.typography.bodySmall
-        )
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 17.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text("Neural Field", color = White,
+                    style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("Graf 3D · satu canonical Brain · read-only",
+                    color = Muted, style = MaterialTheme.typography.labelSmall)
+            }
+            Text("CANVAS 3D", color = Cyan, style = MaterialTheme.typography.labelSmall)
+        }
         AndroidView(
-            factory = { context ->
-                WebView(context).apply {
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.allowFileAccess = false
-                    settings.allowContentAccess = false
-                    webViewClient = WebViewClient()
-                    setBackgroundColor(android.graphics.Color.rgb(5, 11, 21))
-                    loadUrl("http://127.0.0.1:8897/")
-                }
-            },
+            factory = { context -> NeuralMonitor.create(context) },
             modifier = Modifier.fillMaxSize()
         )
     }
@@ -269,7 +370,10 @@ private fun MemoryPage() {
     }
     LaunchedEffect(Unit) { refresh() }
     Column(Modifier.fillMaxSize().padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Canonical Brain", color = White, style = MaterialTheme.typography.headlineSmall)
+        Text("Canonical Memory", color = White, style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold)
+        Text("Snapshot inspeksi read-only dari runtime Go.", color = Muted,
+            style = MaterialTheme.typography.bodySmall)
         Text(status, color = Muted)
         if (data != null) {
             val counts = data!!.optJSONObject("data")?.optJSONObject("counts")
@@ -317,9 +421,10 @@ private fun SettingsPage() {
         Modifier.fillMaxSize().padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
-        Text("Pengaturan Lokal", color = White, style = MaterialTheme.typography.headlineSmall)
+        Text("Horizon Settings", color = White, style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold)
         InfoTile("Horizon Bridge", "127.0.0.1:8765")
-        InfoTile("Monitor Neuron Canvas", "127.0.0.1:8897")
+        InfoTile("Monitor Neuron", "Canvas terpasang di aplikasi · langsung dari Bridge Go")
         OutlinedTextField(
             value = token,
             onValueChange = {
