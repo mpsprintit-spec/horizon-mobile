@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#030915"/>
+<title>HORIZON | Native Neural Graph 3D</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#030915;color:#e7f4ff}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;overscroll-behavior:none;background:#030915}
+body{background:radial-gradient(ellipse 65% 52% at 50% 46%,#0b1f39 0%,#050d1e 55%,#030813 100%)}
+.shell{width:100%;max-width:1000px;min-height:100dvh;margin:0 auto;display:flex;flex-direction:column;padding:16px 16px max(12px,env(safe-area-inset-bottom));gap:13px}
+.top{display:flex;align-items:center;gap:12px;justify-content:space-between;min-height:46px}
+.brand{display:flex;align-items:center;gap:11px}.mark{width:38px;height:38px;border:1px solid #2ed7ed75;transform:rotate(45deg);border-radius:9px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px #1bd2ee22}
+.mark span{transform:rotate(-45deg);font-size:19px;color:#70eafa;text-shadow:0 0 12px #47dfff}
+.brand-title{font-size:13px;font-weight:800;letter-spacing:.27em}.brand-sub{color:#86a2c3;font-size:9px;letter-spacing:.19em;margin-top:4px}
+.tag{font-size:10px;white-space:nowrap;color:#8ddfe7;border:1px solid #245068;border-radius:18px;padding:8px 10px;background:#0b1a2a}
+.tag.demo{color:#ffd68c;border-color:#8a683e}.tag.off{color:#8799ae;border-color:#293b50}
+.intro{display:flex;align-items:end;justify-content:space-between;gap:10px;padding:4px 2px}
+.overline{font-size:10px;letter-spacing:.20em;color:#69cfdb;font-weight:700}
+h1{font-size:clamp(24px,5vw,38px);margin:5px 0 5px;font-weight:760;letter-spacing:-.05em;line-height:1.07}h1 span{color:#72e3f1}
+.desc{color:#8096b3;font-size:11px;line-height:1.5;max-width:490px;margin:0}
+.graph-wrap{position:relative;flex:1;min-height:390px;border:1px solid #15314a;border-radius:17px;overflow:hidden;background:radial-gradient(ellipse 50% 60% at 52% 51%,#0d233e66,#03102111 64%,transparent 90%);isolation:isolate}
+.graph-wrap::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 80px #02101e70;pointer-events:none}
+canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.edge-inspector{position:absolute;z-index:3;left:12px;right:12px;bottom:37px;padding:9px 11px;line-height:1.45;font-size:10px;color:#c8eff9;border:1px solid #2b6e87;border-radius:10px;background:rgba(3,17,33,.95);pointer-events:none;display:none;white-space:normal}.edge-inspector strong{color:#7deeff}.flow-info{font-size:9px;line-height:1.5;color:#80b7c7;letter-spacing:.025em;display:block;margin-top:4px}.flow-hot{color:#79eff5}.connection-badge{display:inline-block;font-size:9px;line-height:1.3;font-weight:800;letter-spacing:.06em;padding:6px 8px;margin-bottom:7px;border:1px solid #476b85;border-radius:20px;background:#06192d;color:#9ab9d2}.connection-badge.good{color:#8ef1cb;border-color:#2f886b}.connection-badge.bad{color:#ffb39f;border-color:#845245}.connection-badge.demo{color:#ffdfa5;border-color:#866a35}.graph-caption{position:absolute;left:16px;top:15px;color:#a5bbd1;font-size:10px;letter-spacing:.12em;pointer-events:none;z-index:2;font-weight:700}
+.graph-caption small{display:block;color:#5f7898;letter-spacing:0;font-size:9px;margin-top:5px;font-weight:400}
+.graph-mode{position:absolute;right:14px;top:15px;text-align:right;font-size:10px;color:#5c9bb5;z-index:2;pointer-events:none}
+.graph-bottom{position:absolute;left:15px;right:15px;bottom:15px;display:flex;align-items:end;justify-content:space-between;z-index:2;pointer-events:none;color:#8ca9c5;font-size:9px;letter-spacing:.06em}
+.legend{display:flex;gap:11px;flex-wrap:wrap}.dot{display:inline-block;width:5px;height:5px;border-radius:50%;vertical-align:middle;margin-right:4px;box-shadow:0 0 7px currentColor}
+.empty{position:absolute;left:20px;right:20px;top:50%;transform:translateY(-50%);z-index:3;text-align:center;display:none;pointer-events:none}.empty strong{display:block;font-size:16px;font-weight:650;margin:0 0 7px}.empty p{font-size:12px;max-width:300px;margin:0 auto;color:#90a4bf;line-height:1.5}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.metric{min-width:0;padding:11px 10px 9px;border-radius:11px;border:1px solid #163149;background:#071525aa}
+.metric .value{font-variant-numeric:tabular-nums;font-size:clamp(14px,3.4vw,20px);letter-spacing:-.035em;font-weight:760;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric .label{font-size:9px;color:#7290ac;letter-spacing:.07em;text-transform:uppercase;margin-top:5px}
+.controls{border:1px solid #18364a;border-radius:13px;background:#071727;padding:11px 12px;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+.actions{display:flex;flex-wrap:wrap;gap:7px}button{font:inherit;color:#b9d9ef;background:#0d2237;border:1px solid #27506b;border-radius:9px;padding:9px 11px;font-size:11px;cursor:pointer;min-height:37px}
+button:active{transform:scale(.98)}button.active{background:#0f3954;border-color:#35b3d3;color:#d9fdff}button.highlight{color:#ffdc9d;border-color:#8a6a3b;background:#2c2112}
+.ranges{display:flex;gap:12px;align-items:center;flex-wrap:wrap}label{display:flex;gap:7px;align-items:center;color:#86a7bf;font-size:10px}input[type=range]{width:78px;accent-color:#66ddeb}
+.source{font-size:10px;color:#7a95ac;line-height:1.4;min-height:15px;padding:0 3px;overflow-wrap:anywhere}
+@media (min-width:700px){.shell{max-width:980px;min-height:100vh;padding:20px;gap:16px}.graph-wrap{min-height:520px}.intro{padding:12px 4px}.metrics{gap:12px}.controls{padding:14px}}
+@media (max-height:680px){.shell{gap:8px;padding-top:10px}.graph-wrap{min-height:310px}.intro{padding:0}.controls{padding:7px}}
+.shell{max-width:none;min-height:100%;padding:8px;gap:8px}.top,.intro{display:none!important}.graph-wrap{min-height:270px;border-color:#22416a}.metric{padding:8px}.metric .label{font-size:8px}.controls{padding:8px}.graph-caption{font-size:9px}.graph-mode{font-size:8px}
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="top">
+    <div class="brand"><div class="mark"><span>✧</span></div><div><div class="brand-title">HORIZON</div><div class="brand-sub">NATIVE NEURAL FIELD / 3D</div></div></div>
+    <span class="tag off" id="status">BELUM TERHUBUNG</span>
+  </header>
+  <section class="intro"><div><div class="overline">NEURAL TOPOLOGY / 01</div><h1>One <span>Neural Graph.</span></h1><p class="desc">Bukan otak biologis. Susunan 3D tumbuh dari representasi numerik dan hubungan sinaps dalam satu canonical Brain.</p></div></section>
+  <section class="graph-wrap" id="wrap">
+    <canvas id="scene" aria-label="Visualisasi interaktif graf neuron Horizon dalam proyeksi tiga dimensi"></canvas>
+    <div class="graph-caption">HORIZON / NEURAL GRAPH <small>Jalur berarah dari sinaps nyata · posisi adalah proyeksi</small></div>
+    <div class="graph-mode" id="modeNote"><span class="connection-badge waiting" id="connectionBadge">MEMERIKSA DATA</span><br><span id="flowBadge">JALUR: BELUM TERUKUR</span><span class="flow-info">Animasi = proyeksi intensitas aktivasi<br>bukan paket listrik terukur</span></div>
+    <div class="empty" id="empty"><strong>Menunggu data Horizon</strong><p>Jalankan canonical Brain Horizon di Termux, atau pilih Contoh untuk menguji tampilan. Contoh bukan data neural Horizon.</p></div>
+    <div class="edge-inspector" id="edgeInspector"></div>
+    <div class="graph-bottom"><div class="legend"><span><i class="dot" style="color:#5bebff;background:#5bebff"></i>Neuron</span><span><i class="dot" style="color:#ad87ff;background:#ad87ff"></i>Sinaps</span><span><i class="dot" style="color:#ffc784;background:#ffc784"></i>Aktivasi</span></div><span>DRAG ROTASI · PINCH ZOOM</span></div>
+  </section>
+  <section class="metrics">
+    <div class="metric"><div class="value" id="nodeCount">—</div><div class="label">Node tampak</div></div>
+    <div class="metric"><div class="value" id="edgeCount">—</div><div class="label">Sinaps tampak</div></div>
+    <div class="metric"><div class="value" id="totalCount">—</div><div class="label">Neuron total</div></div>
+    <div class="metric"><div class="value" id="revision">—</div><div class="label">Revisi state</div></div>
+  </section>
+  <section class="controls">
+    <div class="actions">
+      <button id="demo" class="highlight">Contoh</button><button id="reload">↻ Data Horizon</button>
+      <button id="rotate" class="active">⟳ Rotasi</button><button id="edges" class="active">⌁ Sinaps</button><button id="flow" class="active">⇢ Jalur Aktivitas</button><button id="pause">Ⅱ Jeda</button><button id="reset">◎ Reset</button>
+    </div>
+    <div class="ranges"><label>Kepadatan <input id="density" type="range" min="15" max="100" value="100" /></label><label>Zoom <input id="zoom" type="range" min="50" max="220" value="100" /></label></div>
+  </section>
+  <div class="source" id="sourceLine">Memeriksa sumber data lokal Horizon…</div>
+</main>
+<script>
+'use strict';
+/* Pure HTML Canvas 2D renderer; all 3D coordinates come from graph layout.
+   No cortex mesh, no anatomical shape template, no fabricated live signal. */
+const $ = id=>document.getElementById(id);
+const canvas=$('scene'),ctx=canvas.getContext('2d',{alpha:true,desynchronized:false});
+let W=1,H=1,DPR=1,graph=null,points=[],links=[],renderMode='offline';
+let rotating=true,showEdges=true,showFlow=true,paused=false,viewDensity=1,zoom=1;
+let flowPaths=[],sampleAtMs=0,flowClockMs=0,lastProj=[],selectedEdgeIndex=-1,pressStart=null,pressMoved=false;
+let yaw=.4,pitch=.18,lastFrame=0,iter=0,fitScale=1;
+let isDragging=false,pointers=new Map(),pinchLast=0,refreshHandle=null;
+const palette=['#5ce6ff','#ac8cff','#69edcc','#ffd08a','#7eb6ff','#ff93c4'];
+const sprites=[];
+const bound=(x,min,max)=>Math.max(min,Math.min(max,x));
+const rand=(v)=>{let x=Math.imul(v|0,1597334677)|0;x^=x>>>13;x=Math.imul(x,1357214321)|0;x^=x>>>16;return(x>>>0)/4294967295};
+const hash=(s)=>{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return h>>>0};
+function buildSprites(){
+  for(const color of palette){const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d');
+    const rg=g.createRadialGradient(48,48,1,48,48,45);rg.addColorStop(0,'#ffffff');rg.addColorStop(.06,color);rg.addColorStop(.17,color+'d9');rg.addColorStop(.4,color+'34');rg.addColorStop(1,'transparent');g.fillStyle=rg;g.fillRect(0,0,96,96);sprites.push(c)}
+}
+buildSprites();
+function resize(){const r=canvas.getBoundingClientRect();W=Math.max(1,r.width);H=Math.max(1,r.height);DPR=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0)}
+new ResizeObserver(resize).observe(canvas);
+function makeUnitPosition(node){
+  const seed=hash(node.id),v=node.representation||[];
+  if(!v.length) return [(rand(seed+19)-.5)*3,(rand(seed+43)-.5)*3,(rand(seed+89)-.5)*3];
+  // Fixed random projection: deterministic, not a biological brain outline.
+  const out=[0,0,0];let norm=0;
+  for(let j=0;j<v.length;j++){
+    const val=Number(v[j])||0;norm+=val*val;
+    out[0]+=val*Math.sin((j+1)*2.31+1.7);
+    out[1]+=val*Math.cos((j+1)*1.73+.8);
+    out[2]+=val*Math.sin((j+1)*3.19+2.9)
+  }
+  norm=Math.sqrt(norm+1e-8);const s=1/Math.sqrt(Math.max(1,v.length));
+  return out.map((x,k)=>bound(x*s/norm*2.7+(rand(seed+k*113)-.5)*.35,-3.2,3.2))
+}
+function setGraph(payload){
+ if(!payload || !Array.isArray(payload.nodes) || !Array.isArray(payload.edges))throw Error('Invalid graph payload');
+ let previous=new Map(points.map(p=>[p.id,p]));
+ const p=[];const index=new Map();
+ for(const u of payload.nodes){const id=String(u.id);if(index.has(id))continue;
+   const old=previous.get(id),pos=old?[old.x,old.y,old.z]:makeUnitPosition({id,representation:u.representation});
+   index.set(id,p.length);p.push({id,x:pos[0],y:pos[1],z:pos[2],vx:0,vy:0,vz:0,activation:bound(Number(u.activation)||0,0,1),importance:bound(Number(u.importance)||0,0,1),module:0});
+ }
+ const l=[];
+ for(const e of payload.edges){
+   const a=index.get(String(e.s)),b=index.get(String(e.t));
+   if(a===undefined||b===undefined||a===b)continue;
+   const w=Math.abs(Number(e.w)),conf=Number(e.conf);
+   const raw=Number(e.activation),dynamic=Number(e.dynamic_activation);
+   l.push({a,b,s:String(e.s),t:String(e.t),
+     w:Number.isFinite(w)?bound(w,0,5):0,
+     confidence:Number.isFinite(conf)?bound(conf,0,1):0,
+     // These are recorded substrate scalars, not timestamps of axonal spikes.
+     synapticActivity:Math.max(Number.isFinite(raw)?raw:0,Number.isFinite(dynamic)?dynamic:0,0),
+     inh:!!e.inhibitory});
+ }
+ // Directed potential paths follow REAL synapses. Pulse speed/phase below
+ // are illustration only. No inferred packet, timing or message is added.
+ flowPaths=l.map((e,i)=>{
+   const sourceActivity=p[e.a].activation;
+   const proxy=bound(Math.max(e.synapticActivity,sourceActivity*e.w*e.confidence),0,1);
+   return {i,score:proxy};
+ }).filter(x=>x.score>=.04).sort((a,b)=>b.score-a.score).slice(0,160);
+ sampleAtMs=Date.now();flowClockMs=0;selectedEdgeIndex=-1;
+ $('edgeInspector').style.display='none';
+ $('flowBadge').textContent=flowPaths.length?
+   'JALUR POTENSIAL: '+flowPaths.length+' / '+l.length:
+   'TIDAK ADA INDIKASI JALUR AKTIF';
+
+ // Community label propagation: color groups emerge from observed edges.
+ const neighbors=p.map(()=>[]);for(const e of l){neighbors[e.a].push(e.b);neighbors[e.b].push(e.a)}
+ let labels=p.map((_,i)=>i);
+ for(let turn=0;turn<7;turn++){
+   const next=labels.slice();for(let i=0;i<p.length;i++){
+     if(!neighbors[i].length)continue;const tally=new Map();
+     for(const j of neighbors[i])tally.set(labels[j],(tally.get(labels[j])||0)+1);
+     let max=0,best=labels[i];for(const [lab,cnt] of tally)if(cnt>max || cnt===max && lab<best){max=cnt;best=lab}
+     next[i]=best
+   }labels=next
+ }
+ const unique=[...new Set(labels)];const counts=unique.map(x=>[x,labels.filter(y=>y===x).length]).sort((a,b)=>b[1]-a[1]);const color=new Map(counts.map((v,i)=>[v[0],i%palette.length]));
+ p.forEach((node,i)=>node.module=color.get(labels[i])??(hash(node.id)%6));
+ points=p;links=l;graph=payload;iter=0;
+ $('empty').style.display=points.length?'none':'block';
+ const demo=(payload.mode||'').startsWith('DEMO');renderMode=demo?'demo':'real';
+ $('status').textContent=demo?'DATA SIMULASI':(payload.mode||'DATA HORIZON');$('status').className='tag'+(demo?' demo':'');
+ const badge=$('connectionBadge');badge.textContent=demo?'CONTOH · BUKAN HORIZON':'● DATA HORIZON · REV '+String(payload.state_revision??'?');badge.className='connection-badge '+(demo?'demo':'good');
+ $('nodeCount').textContent=p.length.toLocaleString('id-ID');$('edgeCount').textContent=l.length.toLocaleString('id-ID');
+ $('totalCount').textContent=(payload.counts?.neural_units??p.length).toLocaleString('id-ID');
+ $('revision').textContent=String(payload.state_revision??'—').slice(0,12);
+ $('sourceLine').textContent=demo?'CONTOH SINTETIS — bukan topologi Horizon. Gunakan Data Horizon untuk melihat struktur nyata.':
+  'Brain: '+(payload.brain_identity||'?')+' · '+(payload.coverage||'Snapshot terbatas')+
+  ' · Titik bergerak = visualisasi potensi jalur dari nilai aktivasi/bobot, BUKAN paket sinyal terukur.';
+}
+function offline(message){
+ const text=message||'Bridge Horizon belum dapat diakses. Periksa Termux dan token aplikasi.';
+ const badge=$('connectionBadge');badge.textContent='● DATA NEURAL BELUM TERSEDIA';badge.className='connection-badge bad';
+ $('flowBadge').textContent='JALUR TIDAK TERVERIFIKASI';
+ flowPaths=[];selectedEdgeIndex=-1;$('edgeInspector').style.display='none'; // Do not replay motion on stale data.
+ $('status').textContent='INSPEKSI GAGAL';$('status').className='tag off';
+ renderMode='offline';
+ if(!points.length){
+   $('empty').style.display='block';$('empty').querySelector('strong').textContent='Inspeksi neural belum tersedia';
+   $('empty').querySelector('p').textContent=text;
+ } else {
+   // Prevent stale graph from being mistaken for current live telemetry.
+   $('empty').style.display='block';$('empty').querySelector('strong').textContent='Data tidak dapat diperbarui';
+   $('empty').querySelector('p').textContent=text+' · Jaringan di latar adalah snapshot sebelumnya.';
+ }
+ $('sourceLine').textContent=text;
+}
+let loadingReal=false;
+async function fetchReal(force=false){
+ if(loadingReal)return;
+ loadingReal=true;
+ $('reload').disabled=true;$('reload').textContent='Membaca…';
+ try{
+   const controller=new AbortController();
+   const timeout=setTimeout(()=>controller.abort(),16000);
+   let res;
+   try{res=await fetch('/api/graph'+(force?'?refresh=1':''),{cache:'no-store',signal:controller.signal})}
+   finally{clearTimeout(timeout)}
+   if(!res.ok){
+      const e=await res.json().catch(()=>({}));
+      throw Error(e.message||('HTTP '+res.status));
+   }
+   const data=await res.json();
+   if(data.status!=='ok')throw Error(data.message||'Bridge belum menghasilkan data valid');
+   setGraph(data);
+ }catch(err){
+   offline('Gagal membaca neuron: '+(err.name==='AbortError'?'Permintaan melampaui 16 detik':err.message));
+ }finally{
+   loadingReal=false;
+   $('reload').disabled=false;$('reload').textContent='↻ Data Horizon';
+ }
+}
+function demoData(){
+  // Offline deterministic fixture: unambiguously labeled DEMO, never Horizon data.
+  const nodes=[],edges=[],n=200;
+  for(let i=0;i<n;i++){
+    const rep=[];for(let d=0;d<14;d++)rep.push(Math.sin(i*.17+d*.61)*.5+(Math.floor(i/28)-3)*.20+(rand(i*17+d*257)-.5)*.5);
+    nodes.push({id:String(i+1),activation:rand(i*131+7)**3,representation:rep,importance:rand(i*7+13)})
+  }
+  for(let i=0;i<n;i++)for(let k=0;k<3;k++){
+    const g=Math.floor(i/28),near=rand(i*37+k*211)<.83;
+    const j=near?Math.min(n-1,g*28+Math.floor(rand(i*181+k*193+1)*28)):Math.floor(rand(i*79+k*29+43)*n);
+    if(j!==i)edges.push({s:String(i+1),t:String(j+1),w:.2+rand(i*31+k*17),conf:.6,inh:false})
+  }
+  setGraph({mode:'DEMO • SIMULASI',brain_identity:'DEMO-NOT-HORIZON',state_revision:'demo',nodes,edges,counts:{neural_units:n,synapses:edges.length}})
+}
+function relax(){
+ if(iter>=130||!points.length)return;
+ const n=points.length;
+ // Approximated repulsion + real synaptic attraction, no preset shell/brain shape.
+ for(let i=0;i<n;i++){
+  const p=points[i];let ax=-p.x*.0009,ay=-p.y*.0009,az=-p.z*.0009;
+  for(let j=0;j<13;j++){
+   const q=points[(i+1+Math.floor(rand((i+1)*613+(j+1)*99991)*Math.max(1,n-1)))%n];
+   const dx=p.x-q.x,dy=p.y-q.y,dz=p.z-q.z;
+   const ds=dx*dx+dy*dy+dz*dz+.09,rep=.0017/ds;
+   ax+=dx*rep;ay+=dy*rep;az+=dz*rep;
+  }
+  p.vx=(p.vx+ax)*.79;p.vy=(p.vy+ay)*.79;p.vz=(p.vz+az)*.79;
+ }
+ for(const e of links){const a=points[e.a],b=points[e.b];let dx=b.x-a.x,dy=b.y-a.y,dz=b.z-a.z;
+   const d=Math.sqrt(dx*dx+dy*dy+dz*dz+.00001),ideal=.37+.16/(1+e.w), f=bound((d-ideal)*(.004+.005*e.w),-.045,.045);
+   dx/=d;dy/=d;dz/=d;a.vx+=dx*f;a.vy+=dy*f;a.vz+=dz*f;b.vx-=dx*f;b.vy-=dy*f;b.vz-=dz*f;
+ }
+ for(const p of points){p.x=bound(p.x+p.vx,-12,12);p.y=bound(p.y+p.vy,-12,12);p.z=bound(p.z+p.vz,-12,12)}
+ iter++
+}
+function rotated(p){let c=Math.cos(yaw),s=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+ let x=p.x*c-p.z*s,z=p.x*s+p.z*c;return {x:x,y:p.y*cp-z*sp,z:p.y*sp+z*cp}}
+function draw(){ctx.clearRect(0,0,W,H);if(!points.length)return;
+ const rot=points.map(rotated);let rx=0,ry=0,rz=0;
+ for(const r of rot){rx+=r.x;ry+=r.y;rz+=r.z}rx/=rot.length;ry/=rot.length;rz/=rot.length;
+ let radius=.01;for(const r of rot)radius=Math.max(radius,Math.hypot(r.x-rx,r.y-ry,r.z-rz));
+ const desired=Math.min(W*.45,H*.42)*zoom;
+ const scale=desired/Math.max(.55,radius);
+ const midX=W*.50,midY=H*.52;
+ const proj=rot.map(r=>{const d=1/(1+bound((r.z-rz)/Math.max(radius,.2),-1,1)*-.26);
+  return {x:midX+(r.x-rx)*scale*d,y:midY+(r.y-ry)*scale*d,z:r.z,d}});
+ lastProj=proj;
+ ctx.lineCap='round';if(showEdges){
+  const visible=Math.max(.15,viewDensity);ctx.globalCompositeOperation='source-over';
+  for(let idx=0;idx<links.length;idx++){
+   if(rand(idx*331+183)>visible)continue;
+   const e=links[idx],a=proj[e.a],b=proj[e.b];if(!a||!b)continue;
+   const av=(points[e.a].activation+points[e.b].activation)*.5;
+   const alpha=bound(.17 + .27*e.conf + .1*av,.15,.56);
+   ctx.strokeStyle=idx===selectedEdgeIndex?'rgba(248,255,255,.95)':(e.inh?'rgba(255,176,120,'+(alpha*.75)+')':'rgba(131,164,255,'+alpha+')');
+   ctx.lineWidth=idx===selectedEdgeIndex?2.5:bound(.55+(e.w*.32),.6,1.5)*Math.min(1.7,zoom);
+   ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()
+  }
+ }
+ ctx.globalCompositeOperation='lighter';
+ // Show directional light travel only on edges supported by actual telemetry.
+ // It is a visual *proxy* of a sampled activity state, not real signal timing.
+ if(showEdges && showFlow && renderMode!=='offline'){
+   for(const route of flowPaths){
+      const e=links[route.i],a=proj[e.a],b=proj[e.b];
+      if(!a||!b||rand(route.i*331+183)>viewDensity)continue;
+      const energy=route.score,alpha=bound(.13+.68*energy,.12,.76);
+      ctx.strokeStyle=e.inh?'rgba(255,184,101,'+alpha+')':'rgba(80,233,255,'+alpha+')';
+      ctx.lineWidth=(1+2.4*energy)*Math.min(1.5,zoom);
+      ctx.globalAlpha=1;
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+      // The synapse is source -> target, including inhibitory synapses.
+      const phase=((flowClockMs*.00025*(.8+energy)+rand(hash(e.s+':'+e.t)))%1);
+      const x=a.x+(b.x-a.x)*phase,y=a.y+(b.y-a.y)*phase;
+      const dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;
+      const length=bound(6+energy*15,6,19);
+      ctx.strokeStyle=e.inh?'rgba(255,220,153,'+alpha+')':'rgba(200,250,255,'+alpha+')';
+      ctx.lineWidth=bound(1.3+energy*1.9,1,3.5);
+      ctx.beginPath();ctx.moveTo(x-dx/len*length,y-dy/len*length);ctx.lineTo(x,y);ctx.stroke();
+      const sz=(9+energy*10)*Math.sqrt(zoom);
+      ctx.globalAlpha=alpha;
+      ctx.drawImage(sprites[e.inh?3:0],x-sz*.5,y-sz*.5,sz,sz);
+   }
+ }
+ ctx.globalAlpha=1;
+ // Depth sorting: near nodes appear over distant connections.
+ const drawOrder=proj.map((v,i)=>i).sort((a,b)=>rot[a].z-rot[b].z);
+ for(const i of drawOrder){if(rand(i*911+41)>viewDensity)continue;
+  const p=points[i],q=proj[i];const hot=p.activation;
+  const size=(8.5+hot*7+Math.sqrt(p.importance)*3.5)*bound(q.d,.65,1.5)*Math.sqrt(zoom);
+  ctx.globalAlpha=bound(.52+hot*.5,.5,1);ctx.drawImage(sprites[hot>.67?3:p.module],q.x-size*.5,q.y-size*.5,size,size);
+  ctx.fillStyle=hot>.67?'#ffffff':'#b6e8ff';ctx.globalAlpha=.65+hot*.35;ctx.beginPath();ctx.arc(q.x,q.y,hot>.67?1.7:1.08,0,Math.PI*2);ctx.fill()
+ }
+ ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over'
+}
+function animate(t){const dt=Math.min(50,t-lastFrame||16);lastFrame=t;
+ if(!paused){flowClockMs+=dt;if(rotating)yaw+=dt*.00011; // camera motion only; not artificial neural firing
+  if(iter<130)for(let k=0;k<2;k++)relax()}
+ draw();requestAnimationFrame(animate)
+}
+requestAnimationFrame(animate);
+function setToggle(button,value){button.classList.toggle('active',value)}
+$('demo').onclick=()=>demoData();$('reload').onclick=()=>fetchReal(true);
+$('rotate').onclick=()=>{rotating=!rotating;setToggle($('rotate'),rotating)};
+$('edges').onclick=()=>{showEdges=!showEdges;setToggle($('edges'),showEdges)};
+$('flow').onclick=()=>{showFlow=!showFlow;setToggle($('flow'),showFlow)};
+$('pause').onclick=()=>{paused=!paused;setToggle($('pause'),paused);$('pause').textContent=paused?'▶ Lanjut':'Ⅱ Jeda'};
+$('density').oninput=e=>{viewDensity=Number(e.target.value)/100};
+$('zoom').oninput=e=>{zoom=Number(e.target.value)/100};
+$('reset').onclick=()=>{yaw=.4;pitch=.18;zoom=1;$('zoom').value=100;if(points.length){iter=0;for(const p of points){const pos=makeUnitPosition({id:p.id,representation:graph.nodes?.find(n=>String(n.id)===p.id)?.representation});p.x=pos[0];p.y=pos[1];p.z=pos[2];p.vx=p.vy=p.vz=0}}};
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+// Pick only a real displayed synapse; never invent a route between two nodes.
+function inspectSynapse(clientX,clientY){
+ const inspector=$('edgeInspector');
+ if(!showEdges||!links.length||renderMode==='offline'){
+   inspector.style.display='none';return;
+ }
+ const rect=canvas.getBoundingClientRect(),x=clientX-rect.left,y=clientY-rect.top;
+ let best=-1,bestDistance=15;
+ for(let i=0;i<links.length;i++){
+   if(rand(i*331+183)>Math.max(.15,viewDensity))continue;
+   const e=links[i],a=lastProj[e.a],b=lastProj[e.b];if(!a||!b)continue;
+   const dx=b.x-a.x,dy=b.y-a.y,len2=dx*dx+dy*dy;
+   if(len2<1)continue;
+   const t=bound(((x-a.x)*dx+(y-a.y)*dy)/len2,0,1);
+   const d=Math.hypot(x-(a.x+dx*t),y-(a.y+dy*t));
+   if(d<bestDistance){best=i;bestDistance=d}
+ }
+ selectedEdgeIndex=best;
+ if(best<0){inspector.style.display='none';return}
+ const e=links[best],source=points[e.a],score=bound(Math.max(e.synapticActivity,source.activation*e.w*e.confidence),0,1);
+ const genuine=renderMode==='demo'?'CONTOH / DATA SIMULASI':('HORIZON / REV '+String(graph?.state_revision??'?'));
+ inspector.textContent='';
+ const title=document.createElement('strong');
+ title.textContent='SINAPS '+e.s+' → '+e.t+(e.inh?' · INHIBISI':' · NON-INHIBISI');
+ inspector.appendChild(title);
+ inspector.appendChild(document.createTextNode(
+   ' · '+genuine+' | aktivasi sumber '+source.activation.toFixed(3)+
+   ' | aktivasi sinaps '+e.synapticActivity.toFixed(3)+
+   ' | bobot '+e.w.toFixed(3)+' | confidence '+e.confidence.toFixed(3)+
+   ' | proksi jalur '+score.toFixed(3)+
+   '. Titik bergerak adalah ilustrasi potensi, bukan event transmisi yang direkam.'
+ ));
+ inspector.style.display='block';
+}
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});pressStart={x:e.clientX,y:e.clientY};pressMoved=false;isDragging=true;rotating=false;setToggle($('rotate'),false)});
+canvas.addEventListener('pointermove',e=>{
+ if(!pointers.has(e.pointerId))return;
+ const previous=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(pressStart&&dist(pressStart,{x:e.clientX,y:e.clientY})>9)pressMoved=true;
+ if(pointers.size===2){const pts=[...pointers.values()],newD=dist(pts[0],pts[1]);if(pinchLast>0){zoom=bound(zoom*newD/pinchLast,.5,2.2);$('zoom').value=Math.round(zoom*100)}pinchLast=newD;return}
+ if(pointers.size===1){yaw+=(e.clientX-previous.x)*.0065;pitch=bound(pitch+(e.clientY-previous.y)*.004,-1.42,1.42)}
+});
+function release(e){pointers.delete(e.pointerId);if(pointers.size<2)pinchLast=0;if(!pointers.size)isDragging=false}
+canvas.addEventListener('pointerup',e=>{if(!pressMoved&&pointers.size===1)inspectSynapse(e.clientX,e.clientY);release(e)});canvas.addEventListener('pointercancel',release);
+canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=bound(zoom*(e.deltaY>0?.91:1.09),.5,2.2);$('zoom').value=Math.round(zoom*100)},{passive:false});
+fetchReal();
+// Retry even after initial offline state. Demo remains manual and never polls.
+// Only a single bounded read occurs per interval; no cross-revision pagination.
+refreshHandle=setInterval(()=>{if(renderMode!=='demo' && !document.hidden)fetchReal(false)},15000);
+</script>
+</body>
+</html>
