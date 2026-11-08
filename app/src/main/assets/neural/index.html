@@ -23,7 +23,7 @@ h1{font-size:clamp(24px,5vw,38px);margin:5px 0 5px;font-weight:760;letter-spacin
 .graph-wrap{position:relative;flex:1;min-height:390px;border:1px solid #15314a;border-radius:17px;overflow:hidden;background:radial-gradient(ellipse 50% 60% at 52% 51%,#0d233e66,#03102111 64%,transparent 90%);isolation:isolate}
 .graph-wrap::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 80px #02101e70;pointer-events:none}
 canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:none}
-.flow-info{font-size:9px;line-height:1.5;color:#80b7c7;letter-spacing:.025em;display:block;margin-top:4px}.flow-hot{color:#79eff5}.connection-badge{display:inline-block;font-size:9px;line-height:1.3;font-weight:800;letter-spacing:.06em;padding:6px 8px;margin-bottom:7px;border:1px solid #476b85;border-radius:20px;background:#06192d;color:#9ab9d2}.connection-badge.good{color:#8ef1cb;border-color:#2f886b}.connection-badge.bad{color:#ffb39f;border-color:#845245}.connection-badge.demo{color:#ffdfa5;border-color:#866a35}.graph-caption{position:absolute;left:16px;top:15px;color:#a5bbd1;font-size:10px;letter-spacing:.12em;pointer-events:none;z-index:2;font-weight:700}
+.edge-inspector{position:absolute;z-index:3;left:12px;right:12px;bottom:37px;padding:9px 11px;line-height:1.45;font-size:10px;color:#c8eff9;border:1px solid #2b6e87;border-radius:10px;background:rgba(3,17,33,.95);pointer-events:none;display:none;white-space:normal}.edge-inspector strong{color:#7deeff}.flow-info{font-size:9px;line-height:1.5;color:#80b7c7;letter-spacing:.025em;display:block;margin-top:4px}.flow-hot{color:#79eff5}.connection-badge{display:inline-block;font-size:9px;line-height:1.3;font-weight:800;letter-spacing:.06em;padding:6px 8px;margin-bottom:7px;border:1px solid #476b85;border-radius:20px;background:#06192d;color:#9ab9d2}.connection-badge.good{color:#8ef1cb;border-color:#2f886b}.connection-badge.bad{color:#ffb39f;border-color:#845245}.connection-badge.demo{color:#ffdfa5;border-color:#866a35}.graph-caption{position:absolute;left:16px;top:15px;color:#a5bbd1;font-size:10px;letter-spacing:.12em;pointer-events:none;z-index:2;font-weight:700}
 .graph-caption small{display:block;color:#5f7898;letter-spacing:0;font-size:9px;margin-top:5px;font-weight:400}
 .graph-mode{position:absolute;right:14px;top:15px;text-align:right;font-size:10px;color:#5c9bb5;z-index:2;pointer-events:none}
 .graph-bottom{position:absolute;left:15px;right:15px;bottom:15px;display:flex;align-items:end;justify-content:space-between;z-index:2;pointer-events:none;color:#8ca9c5;font-size:9px;letter-spacing:.06em}
@@ -55,6 +55,7 @@ button:active{transform:scale(.98)}button.active{background:#0f3954;border-color
     <div class="graph-caption">HORIZON / NEURAL GRAPH <small>Jalur berarah dari sinaps nyata · posisi adalah proyeksi</small></div>
     <div class="graph-mode" id="modeNote"><span class="connection-badge waiting" id="connectionBadge">MEMERIKSA DATA</span><br><span id="flowBadge">JALUR: BELUM TERUKUR</span><span class="flow-info">Animasi = proyeksi intensitas aktivasi<br>bukan paket listrik terukur</span></div>
     <div class="empty" id="empty"><strong>Menunggu data Horizon</strong><p>Jalankan canonical Brain Horizon di Termux, atau pilih Contoh untuk menguji tampilan. Contoh bukan data neural Horizon.</p></div>
+    <div class="edge-inspector" id="edgeInspector"></div>
     <div class="graph-bottom"><div class="legend"><span><i class="dot" style="color:#5bebff;background:#5bebff"></i>Neuron</span><span><i class="dot" style="color:#ad87ff;background:#ad87ff"></i>Sinaps</span><span><i class="dot" style="color:#ffc784;background:#ffc784"></i>Aktivasi</span></div><span>DRAG ROTASI · PINCH ZOOM</span></div>
   </section>
   <section class="metrics">
@@ -80,7 +81,7 @@ const $ = id=>document.getElementById(id);
 const canvas=$('scene'),ctx=canvas.getContext('2d',{alpha:true,desynchronized:false});
 let W=1,H=1,DPR=1,graph=null,points=[],links=[],renderMode='offline';
 let rotating=true,showEdges=true,showFlow=true,paused=false,viewDensity=1,zoom=1;
-let flowPaths=[],sampleAtMs=0,flowClockMs=0;
+let flowPaths=[],sampleAtMs=0,flowClockMs=0,lastProj=[],selectedEdgeIndex=-1,pressStart=null,pressMoved=false;
 let yaw=.4,pitch=.18,lastFrame=0,iter=0,fitScale=1;
 let isDragging=false,pointers=new Map(),pinchLast=0,refreshHandle=null;
 const palette=['#5ce6ff','#ac8cff','#69edcc','#ffd08a','#7eb6ff','#ff93c4'];
@@ -137,7 +138,8 @@ function setGraph(payload){
    const proxy=bound(Math.max(e.synapticActivity,sourceActivity*e.w*e.confidence),0,1);
    return {i,score:proxy};
  }).filter(x=>x.score>=.04).sort((a,b)=>b.score-a.score).slice(0,160);
- sampleAtMs=Date.now();flowClockMs=0;
+ sampleAtMs=Date.now();flowClockMs=0;selectedEdgeIndex=-1;
+ $('edgeInspector').style.display='none';
  $('flowBadge').textContent=flowPaths.length?
    'JALUR POTENSIAL: '+flowPaths.length+' / '+l.length:
    'TIDAK ADA INDIKASI JALUR AKTIF';
@@ -171,7 +173,7 @@ function offline(message){
  const text=message||'Bridge Horizon belum dapat diakses. Periksa Termux dan token aplikasi.';
  const badge=$('connectionBadge');badge.textContent='● DATA NEURAL BELUM TERSEDIA';badge.className='connection-badge bad';
  $('flowBadge').textContent='JALUR TIDAK TERVERIFIKASI';
- flowPaths=[]; // Do not replay motion on stale data.
+ flowPaths=[];selectedEdgeIndex=-1;$('edgeInspector').style.display='none'; // Do not replay motion on stale data.
  $('status').textContent='INSPEKSI GAGAL';$('status').className='tag off';
  renderMode='offline';
  if(!points.length){
@@ -255,6 +257,7 @@ function draw(){ctx.clearRect(0,0,W,H);if(!points.length)return;
  const midX=W*.50,midY=H*.52;
  const proj=rot.map(r=>{const d=1/(1+bound((r.z-rz)/Math.max(radius,.2),-1,1)*-.26);
   return {x:midX+(r.x-rx)*scale*d,y:midY+(r.y-ry)*scale*d,z:r.z,d}});
+ lastProj=proj;
  ctx.lineCap='round';if(showEdges){
   const visible=Math.max(.15,viewDensity);ctx.globalCompositeOperation='source-over';
   for(let idx=0;idx<links.length;idx++){
@@ -262,8 +265,8 @@ function draw(){ctx.clearRect(0,0,W,H);if(!points.length)return;
    const e=links[idx],a=proj[e.a],b=proj[e.b];if(!a||!b)continue;
    const av=(points[e.a].activation+points[e.b].activation)*.5;
    const alpha=bound(.17 + .27*e.conf + .1*av,.15,.56);
-   ctx.strokeStyle=e.inh?'rgba(255,176,120,'+(alpha*.75)+')':'rgba(131,164,255,'+alpha+')';
-   ctx.lineWidth=bound(.55+(e.w*.32),.6,1.5)*Math.min(1.7,zoom);
+   ctx.strokeStyle=idx===selectedEdgeIndex?'rgba(248,255,255,.95)':(e.inh?'rgba(255,176,120,'+(alpha*.75)+')':'rgba(131,164,255,'+alpha+')');
+   ctx.lineWidth=idx===selectedEdgeIndex?2.5:bound(.55+(e.w*.32),.6,1.5)*Math.min(1.7,zoom);
    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()
   }
  }
@@ -319,15 +322,50 @@ $('density').oninput=e=>{viewDensity=Number(e.target.value)/100};
 $('zoom').oninput=e=>{zoom=Number(e.target.value)/100};
 $('reset').onclick=()=>{yaw=.4;pitch=.18;zoom=1;$('zoom').value=100;if(points.length){iter=0;for(const p of points){const pos=makeUnitPosition({id:p.id,representation:graph.nodes?.find(n=>String(n.id)===p.id)?.representation});p.x=pos[0];p.y=pos[1];p.z=pos[2];p.vx=p.vy=p.vz=0}}};
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});isDragging=true;rotating=false;setToggle($('rotate'),false)});
+// Pick only a real displayed synapse; never invent a route between two nodes.
+function inspectSynapse(clientX,clientY){
+ const inspector=$('edgeInspector');
+ if(!showEdges||!links.length||renderMode==='offline'){
+   inspector.style.display='none';return;
+ }
+ const rect=canvas.getBoundingClientRect(),x=clientX-rect.left,y=clientY-rect.top;
+ let best=-1,bestDistance=15;
+ for(let i=0;i<links.length;i++){
+   if(rand(i*331+183)>Math.max(.15,viewDensity))continue;
+   const e=links[i],a=lastProj[e.a],b=lastProj[e.b];if(!a||!b)continue;
+   const dx=b.x-a.x,dy=b.y-a.y,len2=dx*dx+dy*dy;
+   if(len2<1)continue;
+   const t=bound(((x-a.x)*dx+(y-a.y)*dy)/len2,0,1);
+   const d=Math.hypot(x-(a.x+dx*t),y-(a.y+dy*t));
+   if(d<bestDistance){best=i;bestDistance=d}
+ }
+ selectedEdgeIndex=best;
+ if(best<0){inspector.style.display='none';return}
+ const e=links[best],source=points[e.a],score=bound(Math.max(e.synapticActivity,source.activation*e.w*e.confidence),0,1);
+ const genuine=renderMode==='demo'?'CONTOH / DATA SIMULASI':('HORIZON / REV '+String(graph?.state_revision??'?'));
+ inspector.textContent='';
+ const title=document.createElement('strong');
+ title.textContent='SINAPS '+e.s+' → '+e.t+(e.inh?' · INHIBISI':' · NON-INHIBISI');
+ inspector.appendChild(title);
+ inspector.appendChild(document.createTextNode(
+   ' · '+genuine+' | aktivasi sumber '+source.activation.toFixed(3)+
+   ' | aktivasi sinaps '+e.synapticActivity.toFixed(3)+
+   ' | bobot '+e.w.toFixed(3)+' | confidence '+e.confidence.toFixed(3)+
+   ' | proksi jalur '+score.toFixed(3)+
+   '. Titik bergerak adalah ilustrasi potensi, bukan event transmisi yang direkam.'
+ ));
+ inspector.style.display='block';
+}
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});pressStart={x:e.clientX,y:e.clientY};pressMoved=false;isDragging=true;rotating=false;setToggle($('rotate'),false)});
 canvas.addEventListener('pointermove',e=>{
  if(!pointers.has(e.pointerId))return;
  const previous=pointers.get(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+ if(pressStart&&dist(pressStart,{x:e.clientX,y:e.clientY})>9)pressMoved=true;
  if(pointers.size===2){const pts=[...pointers.values()],newD=dist(pts[0],pts[1]);if(pinchLast>0){zoom=bound(zoom*newD/pinchLast,.5,2.2);$('zoom').value=Math.round(zoom*100)}pinchLast=newD;return}
  if(pointers.size===1){yaw+=(e.clientX-previous.x)*.0065;pitch=bound(pitch+(e.clientY-previous.y)*.004,-1.42,1.42)}
 });
 function release(e){pointers.delete(e.pointerId);if(pointers.size<2)pinchLast=0;if(!pointers.size)isDragging=false}
-canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
+canvas.addEventListener('pointerup',e=>{if(!pressMoved&&pointers.size===1)inspectSynapse(e.clientX,e.clientY);release(e)});canvas.addEventListener('pointercancel',release);
 canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=bound(zoom*(e.deltaY>0?.91:1.09),.5,2.2);$('zoom').value=Math.round(zoom*100)},{passive:false});
 fetchReal();
 // Retry even after initial offline state. Demo remains manual and never polls.
