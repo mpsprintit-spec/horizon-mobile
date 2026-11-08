@@ -26,4 +26,5 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)
     implementation(libs.coroutines.android)
+    implementation("androidx.webkit:webkit:1.13.0")
 }
