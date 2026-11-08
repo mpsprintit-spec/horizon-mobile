@@ -43,3 +43,20 @@ Jalankan `./gradlew :app:assembleDebug` menggunakan JDK 17 dan Android SDK 36. G
 ## Keaslian kode dan lisensi
 
 Android/Jetpack Compose scaffold diadaptasi secara selektif dari [GPTMobile](https://github.com/Taewan-P/gpt_mobile) karya Taewan-P dan para kontributor, berlisensi GNU GPL-3.0. Lisensi dan atribusi hukum tetap ada dalam `LICENSE` dan `NOTICE.md`. Bagian itu adalah dokumentasi kepatuhan sumber, **bukan branding aplikasi**.
+
+
+## Neural Graph: perbaikan pembacaan data asli (0.1.1)
+
+- **Satu permintaan inspeksi**: `GET http://127.0.0.1:8765/v1/brain/inspection?section=neural_units&order=activity&limit=256`.
+- Protokol lengkap mengambil `data.items` dan `data.related_synapses` dari **halaman dan revisi yang sama**, bukan menggabungkan beberapa halaman dari state yang terus berubah.
+- `data.counts` melaporkan neuron/sinaps *total*; banyaknya titik dan garis tampak adalah sampel maksimal 256 neuron dan koneksi yang berada di antara neuron terpilih.
+- Jika Bridge mengembalikan 413, adapter menurunkan `limit` dengan pembacaan terpisah yang konsisten.
+- Visualizer tidak otomatis mengarang data jika gagal; menampilkan kesalahan 401/403 (token), 404 (Bridge lawas), 503 (runtime), serta mencoba lagi otomatis setiap 15 detik. Tombol **↻ Data Horizon** dapat memaksa pemuatan ulang.
+- Label **BRIDGE** pada header aplikasi menunjukkan health Go; status **DATA HORIZON** pada Canvas menunjukkan inspeksi aktual.
+- Pengujian parser terpisah (`NeuralGraphContractTest`) termasuk schema, edges, counts, dan penolakan identitas Brain asing.
+
+### Memasang tanpa kehilangan chat
+
+Build **debug** dipaketkan sebagai `com.valtheron.horizon.mobile.preview` dan berlabel **Horizon Mobile Uji**. APK debug GitHub Actions menggunakan signing key temporer; menginstal versi baru dengan applicationId utama dapat menyebabkan `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, dan uninstall aplikasi asli dapat menghapus riwayat lokal.
+
+Versi Uji bisa dipasang **berdampingan** dengan aplikasi lama. Ia berbagi runtime Go pada `127.0.0.1:8765` tetapi menyimpan pengaturan dan chat uji secara terpisah. Untuk rilis utama, sediakan signing key yang stabil secara aman (jangan commit private key ke repository).
