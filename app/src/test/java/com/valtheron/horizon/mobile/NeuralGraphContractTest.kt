@@ -12,6 +12,7 @@ class NeuralGraphContractTest {
           "schema_version":1,
           "brain_identity":"horizon-primary-brain",
           "state_revision":237,
+          "captured_at":"2026-11-08T16:00:00Z",
           "inspection_epoch":"fixture-live-epoch",
           "data":{
             "section":"neural_units",
@@ -19,12 +20,12 @@ class NeuralGraphContractTest {
             "total":8,
             "counts":{"neural_units":8,"synapses":16},
             "items":[
-              {"id":5,"representation":[0.3,-0.2],"activation":0.75,"importance":0.5,"plasticity":0.2},
+              {"id":5,"representation":[0.3,-0.2],"activation":0.75,"importance":0.5,"plasticity":0.2,"last_activation":"2026-11-08T16:00:00Z"},
               {"id":7,"representation":[0.4,0.6],"activation":0.12,"importance":0.7,"plasticity":0.4}
             ],
             "related_total":1,
             "related_synapses":[
-              {"source_id":5,"target_id":7,"weight":0.63,"confidence":0.9,"inhibitory":false}
+              {"source_id":5,"target_id":7,"weight":0.63,"confidence":0.9,"activation":0.31,"inhibitory":false,"last_activation":"2026-11-08T16:00:00Z","dynamic":{"activation":0.12,"last_activation":"2026-11-08T16:00:00Z"}}
             ]
           }
         }
@@ -45,6 +46,10 @@ class NeuralGraphContractTest {
         assertEquals("5", edge.getString("s"))
         assertEquals("7", edge.getString("t"))
         assertEquals(0.63, edge.getDouble("w"), 1e-10)
+        assertEquals(0.31, edge.getDouble("activation"), 1e-10)
+        assertEquals(0.12, edge.getDouble("dynamic_activation"), 1e-10)
+        assertEquals("2026-11-08T16:00:00Z", graph.getString("captured_at"))
+        assertEquals("2026-11-08T16:00:00Z", graph.getJSONArray("nodes").getJSONObject(0).getString("last_activation"))
         assertEquals(false, edge.getBoolean("inhibitory"))
     }
 
