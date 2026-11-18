@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#030814"><title>HORIZON Mobile | Neural 3D Ultra</title>
+<style>
+:root{color-scheme:dark;--text:#dbeef9;--muted:#7093a9;--line:rgba(118,183,218,.23);--ice:#75d9ff;--gold:#ffc785}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#020714;font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+canvas{display:block;position:fixed;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}canvas:active{cursor:grabbing}
+.vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 47%,transparent 17%,rgba(0,3,11,.04) 45%,rgba(0,3,12,.48) 105%)}
+.grain{position:fixed;inset:0;pointer-events:none;opacity:.11;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' opacity='.25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.chrome{position:fixed;inset:0;pointer-events:none;z-index:4}.glass{background:linear-gradient(135deg,rgba(7,19,34,.88),rgba(4,15,26,.80));border:1px solid var(--line);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 12px 44px rgba(0,0,0,.22)}
+.top{position:absolute;left:clamp(14px,2.7vw,42px);right:clamp(14px,2.7vw,42px);top:clamp(14px,2.6vw,35px);display:flex;align-items:flex-start;justify-content:space-between;gap:15px}
+.brand{display:flex;gap:12px;align-items:center}.symbol{width:39px;height:39px;border:1px solid rgba(105,214,253,.33);border-radius:11px;display:grid;place-items:center;background:rgba(34,107,148,.09);color:#7bddff;box-shadow:inset 0 0 21px rgba(55,164,224,.10)}.symbol svg{width:29px;height:29px}.brand b{font-size:15px;letter-spacing:.31em;font-weight:650}.brand small{font-size:9px;letter-spacing:.23em;display:block;color:#75a3bd;margin-top:3px}
+.top-right{display:flex;gap:9px;align-items:center}.status{border-radius:22px;padding:10px 14px;display:flex;align-items:center;gap:8px;letter-spacing:.11em;font-size:10px;color:#f5c894;font-weight:650}.status i{height:7px;width:7px;border-radius:100%;background:#eeb46e;box-shadow:0 0 9px #fcb969}.status.live{color:#89ebc1}.status.live i{background:#68ecb2;box-shadow:0 0 9px #68ecb2}
+.top-icon{pointer-events:auto;display:grid;place-items:center;height:38px;width:38px;border-radius:10px}
+button,select,input{font:inherit}button{pointer-events:auto;color:#bfd6e5;cursor:pointer;background:rgba(7,26,43,.94);border:1px solid rgba(116,178,209,.27);border-radius:9px;padding:10px 12px;font-size:11px;transition:background .15s,border-color .15s}button:hover,button:focus-visible{background:rgba(33,78,104,.8);border-color:#72c5e8;outline:none}button.active{color:#fcd2a3;border-color:rgba(245,190,107,.65)}button.primary{border-color:rgba(84,193,242,.54);background:rgba(31,97,142,.35);color:#b8ecff}
+.side{position:absolute;top:120px;left:clamp(14px,2.7vw,42px);width:278px;padding:21px;border-radius:14px;pointer-events:auto}.eyebrow{font-size:9px;color:#619ab9;letter-spacing:.19em;text-transform:uppercase;font-weight:700}.focusid{margin:11px 0 4px;font-size:22px;font-weight:500;letter-spacing:.025em}.sub{font-size:11px;color:#789ab0;line-height:1.6}.hr{height:1px;background:var(--line);margin:18px 0}
+.bigstat{display:flex;align-items:baseline;gap:10px;margin:10px 0}.bigstat strong{font-size:56px;font-weight:250;letter-spacing:-.065em;line-height:1;color:#bcf0ff;font-variant-numeric:tabular-nums}.bigstat span{color:#91b1c3;font-size:11px;line-height:1.5}.metricrow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(113,169,202,.10);font-size:11px}.metricrow:last-child{border:0}.metricrow span{color:#7c9bad}.metricrow b{font-weight:550;font-variant-numeric:tabular-nums}.scientific{margin-top:16px;font-size:10px;line-height:1.62;color:#7496a8}.scientific strong{color:#9ccde3}
+.reps{position:absolute;top:120px;right:clamp(14px,2.7vw,42px);width:230px;padding:17px 16px 15px;border-radius:14px;pointer-events:auto;max-height:min(65vh,510px);overflow:auto}.reps::-webkit-scrollbar{width:3px}.reps::-webkit-scrollbar-thumb{background:#244b62}.reptop{display:flex;align-items:center;justify-content:space-between;font-size:11px;gap:9px}.repcount{font-size:11px;color:#92dcfc}.repr{display:grid;grid-template-columns:8px 1fr auto;align-items:center;gap:10px;margin-top:12px;min-width:0}.repr i{height:7px;width:7px;background:#69d4ff;box-shadow:0 0 9px rgba(91,209,255,.45);border-radius:50%}.repr label{font-size:10px;color:#a9c5d7}.repr em{font-size:10px;font-style:normal;color:#6797b2}.repbar{height:2px;background:#183346;margin-top:5px;position:relative;overflow:hidden}.repbar u{display:block;text-decoration:none;height:100%;background:linear-gradient(90deg,#2579a6,#7edaff)}
+.bottom{position:absolute;left:50%;bottom:clamp(14px,2.6vw,28px);transform:translateX(-50%);width:max-content;max-width:calc(100vw - 24px);padding:10px;display:flex;gap:7px;align-items:center;justify-content:center;border-radius:14px;pointer-events:auto}.divider{height:26px;width:1px;background:var(--line);margin:0 5px}.range{display:flex;flex-direction:column;gap:4px;padding:0 9px;min-width:135px}.range>span{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.07em;color:#85acc0}.range b{color:#d7f2fc;font-size:10px;font-weight:600}.range input{width:100%;accent-color:#6ac9ec;cursor:pointer;height:12px}.quality{background:#081a2a;color:#b8d7e7;border:1px solid rgba(116,178,209,.27);border-radius:9px;height:34px;padding:0 6px;font-size:11px;cursor:pointer}
+.hint{position:absolute;bottom:112px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;letter-spacing:.09em;color:rgba(140,188,209,.63);text-shadow:0 2px 8px black}.footnote{position:absolute;bottom:17px;left:clamp(14px,2.7vw,42px);font-size:9px;letter-spacing:.11em;color:rgba(95,143,168,.72)}
+.modalwrap{position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;background:rgba(0,3,11,.66);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);padding:14px}.modalwrap.open{display:flex}.modal{border-radius:15px;width:min(100%,480px);padding:25px;max-height:90vh;overflow:auto}.modal h2{font-size:17px;margin:0 0 9px}.modal p{font-size:12px;color:#91aebf;line-height:1.65;margin:6px 0 14px}.modal input[type=text],.modal textarea{width:100%;background:#061627;color:#ccefff;border:1px solid #315369;border-radius:8px;padding:10px;margin:5px 0;outline:none;font-size:11px}.modal textarea{height:130px;font:11px/1.5 ui-monospace,monospace;resize:vertical}.modal .buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.modal code{font-size:10px;color:#8fe1ff;overflow-wrap:anywhere}.note{font-size:11px;color:#b2d2e5;margin-top:8px;min-height:17px}.error{color:#ffc58b}.hidden{display:none!important}
+#fallback{display:none;position:fixed;inset:0;z-index:20;place-items:center;text-align:center;padding:25px;background:#040c18;color:#b8dae8}
+.minimal .side,.minimal .reps,.minimal .top,.minimal .hint,.minimal .footnote{opacity:0;pointer-events:none}.minimal .bottom{opacity:.2}.minimal .bottom:hover{opacity:1}
+@media (max-width:1100px){.reps{width:190px}.side{width:245px}.side{padding:16px}.bigstat strong{font-size:48px}}
+@media (max-width:760px){.brand b{font-size:12px}.brand small{font-size:7px}.symbol{width:32px;height:32px}.top{top:12px}.top-icon{height:32px;width:32px}.status{font-size:9px;padding:8px}.side{top:64px;width:194px;padding:11px 13px}.focusid{font-size:16px;margin:7px 0 0}.eyebrow{font-size:8px}.sub{font-size:9px}.bigstat{margin:6px 0}.bigstat strong{font-size:39px}.bigstat span{font-size:9px}.metricrow{font-size:9px;padding:5px 0}.hr{margin:10px 0}.scientific{margin-top:9px;font-size:8px}.reps{top:64px;width:156px;padding:11px;max-height:46vh}.reptop{font-size:9px}.repr{gap:5px;margin-top:8px}.repr label,.repr em{font-size:9px}.bottom{bottom:9px;padding:7px;gap:5px;max-width:calc(100vw - 14px)}.bottom button{font-size:10px;padding:8px}.range{min-width:95px;padding:0 4px}.range>span{font-size:8px}.quality{font-size:10px}.divider{margin:0 1px}.hint{bottom:75px;font-size:8px}.footnote{display:none}}
+@media (max-width:480px){.side{width:155px}.scientific{display:none}.reps{width:119px}.reps .repr em{display:none}.repr{grid-template-columns:7px 1fr}.range{min-width:80px}.bottom{flex-wrap:wrap;width:calc(100vw - 18px)}.hint{display:none}.bottom button{flex:1 0 auto}}
+</style>
+</head>
+<body>
+<canvas id="glcanvas" aria-label="Ruang tiga dimensi neuron Horizon yang dapat diputar dan diperbesar"></canvas>
+<div class="vignette"></div><div class="grain"></div>
+<div id="fallback"><div><h3>WebGL2 tidak tersedia</h3><p>Visualisasi 3D memerlukan browser dengan WebGL2 dan akselerasi grafis aktif.<br>Coba Chrome Android versi terbaru.</p></div></div>
+<div class="chrome" id="chrome">
+ <header class="top"><div class="brand"><div class="symbol"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="16" cy="16" r="5"/><circle cx="16" cy="16" r="2" fill="currentColor"/><path d="M16 11V3M16 21v8M11 16H2m19 0h9M12.4 12.4 6 6m13.6 13.6 6 6m-13.6-6L6 26m13.6-13.6L26 6"/><circle cx="16" cy="3" r="1.6"/><circle cx="30" cy="16" r="1.6"/><circle cx="6" cy="26" r="1.6"/></svg></div><div><b>HORIZON</b><small>NEURAL 3D OBSERVATORY</small></div></div><div class="top-right"><div id="source" class="status glass"><i></i><span id="sourceLabel">OFFLINE / MENUNGGU DATA</span></div><button class="top-icon glass" id="dataBtn" title="Hubungkan data Horizon">◈</button><button class="top-icon glass" id="uiBtn" title="Sembunyikan antarmuka">⛶</button></div></header>
+ <section class="side glass"><div class="eyebrow">NEURON TERPILIH</div><div class="focusid" id="nid">—</div><div class="sub" id="nsub">Substrate / representasi terdistribusi</div><div class="hr"></div><div class="eyebrow">KOMPONEN VEKTOR / SERABUT</div><div class="bigstat"><strong id="repNum">0</strong><span>komponen<br>divisualkan</span></div><div class="metricrow"><span>Jaringan</span><b id="neuronNum">5 neuron</b></div><div class="metricrow"><span>Sinaps terpetakan</span><b id="synNum">—</b></div><div class="metricrow"><span>Aktivasi</span><b id="actNum">—</b></div><div class="metricrow"><span>Impuls tampak</span><b id="impNum">—</b></div><div class="scientific"><strong>Interpretasi:</strong> Setiap bundel serabut merepresentasikan satu komponen numerik dari vektor neural yang tersedia. Ini BUKAN penghitungan representasi semantik, jumlah serabut biologis, atau peristiwa impuls nyata.</div></section>
+ <section class="reps glass" id="repsPanel"><div class="reptop"><span class="eyebrow">STRUKTUR SERABUT</span><b class="repcount" id="repCounter">14</b></div><div id="repList"></div></section>
+ <div class="hint">GESER: PUTAR 3D · CUBIT / SCROLL: ZOOM · KETUK NEURON: INSPEKSI</div>
+ <div class="footnote" id="fps">REAL 3D / WEBGL2</div><div class="bridge-foot" id="bridgeFoot" style="position:absolute;bottom:42px;left:12px;color:#87b3ce;font-size:9px;letter-spacing:.02em;max-width:72vw">Pembacaan snapshot Bridge · belum tersedia</div>
+ <div class="bottom glass">
+  <button id="playBtn" title="Jeda atau lanjut animasi">Ⅱ &nbsp; Jeda</button>
+  <button id="orbitBtn" class="active" title="Rotasi kamera otomatis">↻ &nbsp; Orbit</button>
+  <div class="divider"></div>
+  <label class="range" id="repControl"><span>REPRESENTASI <b id="repLabel">14</b></span><input type="range" min="2" max="24" step="1" value="14" id="repSlider"></label>
+  <label class="range"><span>LAJU IMPULS <b id="speedLabel">1.0×</b></span><input type="range" min="0" max="300" step="10" value="100" id="speedSlider"></label>
+  <div class="divider"></div>
+  <select id="quality" class="quality" title="Kualitas render"><option value="ultra">Ultra HD</option><option value="high" selected>HD</option><option value="eco">Hemat</option></select>
+  <button id="shotBtn" title="Simpan gambar PNG dari tampilan 3D">▣ &nbsp; Foto</button>
+ </div>
+</div>
+<div class="modalwrap" id="modalwrap"><div class="modal glass">
+<h2>Horizon Mobile · Bridge Neural</h2>
+<p>Data otomatis dibaca melalui adaptor Android read-only dari <code>127.0.0.1:8765/v1/brain/inspection</code>. Tidak memakai API AI eksternal, server tambahan, atau input impuls buatan.</p>
+<p>Visual 3D memakai proyeksi matematis, bukan koordinat biologis. Partikel pada sinaps nyata hanya <strong>proksi aktivitas snapshot</strong>, belum event impuls individual. Jumlah serabut memvisualkan komponen vektor numerik, bukan jumlah representasi konseptual terukur.</p>
+<p id="bridgeStatus">Status: menunggu pembacaan awal.</p>
+<div class="buttons"><button id="connectBtn" class="primary">↻ Sinkronkan Horizon</button><button id="demoBtn">Contoh / DEMO</button><button id="closeModal">Tutup</button></div>
+<div class="note" id="modalMsg"></div></div></div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), canvas=$('glcanvas');
+let gl;try{gl=canvas.getContext('webgl2',{alpha:false,antialias:true,depth:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});}catch(e){}if(!gl){$('fallback').style.display='grid';return;}
+const TAU=Math.PI*2, PI=Math.PI, clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),mix=(a,b,t)=>a+(b-a)*t;
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],mul=(a,t)=>[a[0]*t,a[1]*t,a[2]*t],dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],norm=a=>{const l=Math.hypot(...a)||1;return mul(a,1/l)};
+let seed=129831;function rand(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;}function rr(a,b){return mix(a,b,rand())}function rdir(){return norm([rr(-1,1),rr(-1,1),rr(-1,1)])}
+function perspective(fov,aspect,near,far){const f=1/Math.tan(fov/2),n=1/(near-far);return new Float32Array([f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*n,-1,0,0,2*far*near*n,0]);}
+function lookAt(eye,target){const z=norm(sub(eye,target)),x=norm(cross([0,1,0],z)),y=cross(z,x);return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,eye),-dot(y,eye),-dot(z,eye),1]);}
+function matMul(a,b){const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s;}return o;}
+function transformed(p,m){const w=m[3]*p[0]+m[7]*p[1]+m[11]*p[2]+m[15];return[(m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12])/w,(m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13])/w,(m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14])/w];}
+function compile(type,src){const sh=gl.createShader(type);gl.shaderSource(sh,src);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh));return sh;}
+function program(vs,fs){const p=gl.createProgram();gl.attachShader(p,compile(gl.VERTEX_SHADER,vs));gl.attachShader(p,compile(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p));return p;}
+const meshVS=`#version 300 es
+precision highp float;
+layout(location=0) in vec3 aPosition;layout(location=1) in vec3 aNormal;layout(location=2) in vec4 aColor;layout(location=3) in float aRole;
+uniform mat4 uVP;uniform float uTime;
+out vec3 vN;out vec3 vP;out vec4 vC;out float vRole;
+void main(){vec3 pos=aPosition;vN=aNormal;vP=pos;vC=aColor;vRole=aRole;gl_Position=uVP*vec4(pos,1.0);}`;
+const meshFS=`#version 300 es
+precision highp float;
+in vec3 vN;in vec3 vP;in vec4 vC;in float vRole;out vec4 outColor;
+uniform float uTime;uniform float uGlow;
+float hash(vec3 p){p=fract(p*0.3183099+vec3(.1,.13,.17));p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
+float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
+float fbm(vec3 p){float s=0.;float a=.5;for(int i=0;i<4;i++){s+=a*noise(p);p=p*2.11;a*=.5;}return s;}
+void main(){vec3 n=normalize(vN);vec3 light=normalize(vec3(-.32,.74,1.));float diff=clamp(dot(n,light),0.,1.);vec3 view=normalize(vec3(.0,.12,1.));float fres=pow(1.-abs(dot(n,view)),2.5);vec3 color=vC.rgb;
+if(vRole>.5){float t=fbm(vP*6.1+vec3(.0,uTime*.017,.0));float micro=fbm(vP*25.);float spec=pow(max(dot(reflect(-light,n),view),0.),24.);float veins=pow(sin(vP.x*19.+t*13.)*.5+.5,10.)*.22;float material=.37+.7*diff+.46*fres+.27*(t-.4)+.10*micro+veins; color*=material; color+=vec3(.28,.65,.85)*spec*.5; if(vRole>1.5){color+=vC.rgb*(.17+.23*sin(uTime*1.65));} }
+else{float sheen=pow(max(dot(reflect(-light,n),view),0.),20.);color*=.56+.58*diff+.40*fres; color+=vC.rgb*sheen*.32;}
+float a=vC.a; if(uGlow>0.5){color=vC.rgb*.34; a*=.14;}outColor=vec4(color,a);}`;
+const pointVS=`#version 300 es
+precision highp float;
+layout(location=0) in vec3 aPosition;layout(location=1) in vec4 aColor;layout(location=2) in float aSize;
+uniform mat4 uVP;uniform vec2 uSize;uniform float uScale;out vec4 vColor;
+void main(){vec4 c=uVP*vec4(aPosition,1.);gl_Position=c;float f=clamp(uSize.y/max(2.,c.w)*.016,1.,13.);gl_PointSize=clamp(aSize*f*uScale,1.,80.);vColor=aColor;}`;
+const pointFS=`#version 300 es
+precision highp float;
+in vec4 vColor;out vec4 outColor;
+void main(){vec2 p=gl_PointCoord-.5;float r=length(p)*2.;float core=exp(-r*r*20.);float glow=exp(-r*r*3.4);float alpha=(core*.88+glow*.25)*vColor.a; if(alpha<.008)discard; outColor=vec4(vColor.rgb*(core*1.3+glow*.55),alpha);}`;
+const quadVS=`#version 300 es
+precision highp float;layout(location=0) in vec2 pos;out vec2 uv;void main(){uv=pos*.5+.5;gl_Position=vec4(pos,0.,1.);}`;
+const brightFS=`#version 300 es
+precision highp float;in vec2 uv;uniform sampler2D t0;out vec4 o;void main(){vec3 c=texture(t0,uv).rgb;float l=max(max(c.r,c.g),c.b);o=vec4(c*smoothstep(.26,1.5,l),1.);}`;
+const blurFS=`#version 300 es
+precision highp float;in vec2 uv;uniform sampler2D t0;uniform vec2 texel;uniform vec2 direction;out vec4 o;void main(){vec3 s=texture(t0,uv).rgb*.227027;s+=texture(t0,uv+direction*texel*1.3846).rgb*.316216;s+=texture(t0,uv-direction*texel*1.3846).rgb*.316216;s+=texture(t0,uv+direction*texel*3.2308).rgb*.07027;s+=texture(t0,uv-direction*texel*3.2308).rgb*.07027;o=vec4(s,1.);}`;
+const compFS=`#version 300 es
+precision highp float;in vec2 uv;uniform sampler2D t0;uniform sampler2D t1;uniform float bloom;out vec4 o;void main(){vec3 base=texture(t0,uv).rgb;vec3 glow=texture(t1,uv).rgb;vec3 c=base+glow*bloom;c=vec3(1.)-exp(-c*1.16);c=pow(c,vec3(.91));vec2 p=uv-.5;c*=1.-dot(p,p)*.48;o=vec4(c,1.);}`;
+let meshP,pointP,quadP,brightP,blurP,compP;try{meshP=program(meshVS,meshFS);pointP=program(pointVS,pointFS);quadP=program(quadVS,compFS);brightP=program(quadVS,brightFS);blurP=program(quadVS,blurFS);compP=quadP;}catch(e){$('fallback').style.display='grid';$('fallback').innerText='Gagal menjalankan shader WebGL2: '+e.message;return;}
+const buf=()=>gl.createBuffer();let meshVAO=gl.createVertexArray(),meshBuffers=[buf(),buf(),buf(),buf(),buf()],meshCount=0;
+function setAttrib(index,buffer,data,n){gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);gl.enableVertexAttribArray(index);gl.vertexAttribPointer(index,n,gl.FLOAT,false,0,0);}
+let pointVAO=gl.createVertexArray(),pointBuffers=[buf(),buf(),buf()],pointCount=0;
+function setPointBuffer(idx,data,n){gl.bindBuffer(gl.ARRAY_BUFFER,pointBuffers[idx]);gl.bufferData(gl.ARRAY_BUFFER,data,gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(idx);gl.vertexAttribPointer(idx,n,gl.FLOAT,false,0,0);}
+const quadVAO=gl.createVertexArray(),quadB=buf();gl.bindVertexArray(quadVAO);gl.bindBuffer(gl.ARRAY_BUFFER,quadB);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);gl.bindVertexArray(null);
+const geom={P:[],N:[],C:[],R:[],I:[]};let allPaths=[],bundlePaths=[],stars=[],neuronCenters=[],neuronData=[],synapses=0;
+function vertex(p,n,c,r){geom.P.push(...p);geom.N.push(...n);geom.C.push(...c);geom.R.push(r);}
+function tri(a,b,c){geom.I.push(a,b,c)}
+function sphere(center,r,color,role,seg=26,rings=18,seedOffset=0){let base=geom.P.length/3;for(let j=0;j<=rings;j++){let phi=j/rings*PI;for(let i=0;i<=seg;i++){let theta=i/seg*TAU,n=[Math.cos(theta)*Math.sin(phi),Math.cos(phi),Math.sin(theta)*Math.sin(phi)];let wobble=1+.044*Math.sin(theta*11.+phi*7.+seedOffset)*Math.sin(phi*16.+seedOffset)+.021*Math.sin(theta*19.+seedOffset*4.)*Math.sin(phi*29.);vertex(add(center,mul(n,r*wobble)),n,color,role);}}for(let j=0;j<rings;j++)for(let i=0;i<seg;i++){let a=base+j*(seg+1)+i,b=a+seg+1;tri(a,a+1,b);tri(b,a+1,b+1);}}
+function bezier(a,b,c,d,t){let s=1-t;return add(add(mul(a,s*s*s),mul(b,3*s*s*t)),add(mul(c,3*s*t*t),mul(d,t*t*t)));}
+function curve(a,d,wiggle=.3,steps=17){const vec=sub(d,a),length=Math.hypot(...vec),v=norm(vec),side=norm(cross(v,Math.abs(v[1])>.8?[1,0,0]:[0,1,0])),other=norm(cross(v,side));const p1=add(add(a,mul(vec,.28)),add(mul(side,rr(-wiggle,wiggle)*length),mul(other,rr(-wiggle,wiggle)*length*.5)));const p2=add(add(a,mul(vec,.72)),add(mul(side,rr(-wiggle,wiggle)*length),mul(other,rr(-wiggle,wiggle)*length*.5)));const ps=[];for(let i=0;i<=steps;i++){let t=i/steps;let p=bezier(a,p1,p2,d,t);let rust=Math.sin(t*17.+seed%19)*Math.sin(PI*t)*length*.008;ps.push(add(p,mul(other,rust)));}return ps;}
+function tube(points,r,color,role=0,group=-1,sides=6){const start=geom.P.length/3;let npt=points.length;for(let i=0;i<npt;i++){const t=i/(npt-1),tangent=norm(sub(points[Math.min(i+1,npt-1)],points[Math.max(0,i-1)])),ref=Math.abs(tangent[1])>.88?[1,0,0]:[0,1,0],b1=norm(cross(tangent,ref)),b2=norm(cross(tangent,b1));let width=r*(.88+.14*Math.sin(i*1.7))*Math.max(.12,Math.pow(1-t,.66));for(let j=0;j<=sides;j++){let ang=j/sides*TAU;let n=add(mul(b1,Math.cos(ang)),mul(b2,Math.sin(ang))),pos=add(points[i],mul(n,width));vertex(pos,n,color,role);}}for(let i=0;i<npt-1;i++)for(let j=0;j<sides;j++){let a=start+i*(sides+1)+j,b=a+sides+1;tri(a,a+1,b);tri(b,a+1,b+1);}allPaths.push({points,group,weight:r,start:rr(0,1),speed:rr(.16,.5)});if(group>=0){(bundlePaths[group]|| (bundlePaths[group]=[])).push(allPaths[allPaths.length-1]);}}
+function unitDirection(i,n){let phi=i*PI*(3-Math.sqrt(5))+0.38,z=1-2*(i+.5)/n,t=Math.sqrt(1-z*z);return norm([Math.cos(phi)*t,z,Math.sin(phi)*t]);}
+function cBranch(center,scale,b,count,isMain){let dir=unitDirection(b,count);if(isMain){dir=norm(add(mul(dir,.75),mul(norm([dir[0],dir[1]*.67,dir[2]]),.25)));}let start=add(center,mul(dir,scale*.64)),extent=rr(3.0,4.15)*scale,end=add(center,add(mul(dir,extent),mul(rdir(),scale*.2)));let pts=curve(start,end,.16,20);let tcol=isMain?[.19+rr(-.025,.07),.66+rr(-.1,.06),1.,.95]:[.11,.45,.69,.52];tube(pts,.105*scale,tcol,0,isMain?b:-1,8);
+ for(let j=0;j<5;j++){let off=rr(.22,.88),p=pts[Math.floor(off*(pts.length-1))];let a=norm(add(mul(dir,rr(.2,.65)),mul(rdir(),rr(.9,1.7)))),len=rr(.75,1.85)*scale*(1-off*.40);let e=add(p,mul(a,len));let leaf=curve(p,e,.22,13);tube(leaf,rr(.025,.050)*scale,[.14,.60,.89,rr(.56,.90)],0,isMain?b:-1,5);
+  for(let k=0;k<3;k++){let q=leaf[Math.floor(rr(.32,.88)*(leaf.length-1))];let w=norm(add(mul(a,rr(.1,.7)),mul(rdir(),rr(.65,1.2))));let twig=curve(q,add(q,mul(w,rr(.30,.82)*scale)),.15,8);tube(twig,rr(.006,.018)*scale,[.28,.76,1.,rr(.35,.67)],0,isMain?b:-1,4);
+   if(j<3 && k<2){for(let s=0;s<2;s++){let v=twig[Math.floor(rr(.3,.8)*(twig.length-1))];let hair=curve(v,add(v,mul(norm(add(w,mul(rdir(),rr(.4,1.4)))),rr(.15,.32)*scale)),.13,5);tube(hair,.0045*scale,[.24,.63,.88,.34],0,isMain?b:-1,3);}}
+  }
+ }
+ // Fine filaments run roughly parallel to the parent root, forming a distinguishable bundle.
+ for(let j=0;j<12;j++){let root=add(start,mul(rdir(),rr(.06,.23)*scale));let t=rr(.30,.95),guide=pts[Math.floor(t*(pts.length-1))];let endpoint=add(guide,mul(rdir(),rr(.07,.46)*scale));tube(curve(root,endpoint,.07,12),rr(.003,.009)*scale,[.26,.69,.92,rr(.20,.48)],0,isMain?b:-1,4);}
+}
+function makeNeuron(center,scale,count,id,isMain){neuronCenters.push(center);const baseCount=allPaths.length;const shade=isMain?[.11,.48,.74,1]:[.09,.34,.57,.83];sphere(center,.65*scale,shade,1,36,25,rr(0,8));sphere(add(center,[scale*.035,scale*.015,scale*.03]),.46*scale,[.12,.80,1.,.76],2,26,18,rr(0,8));sphere(add(center,[scale*.07,scale*.03,scale*.09]),.27*scale,[.32,.89,1.,.45],2,20,14,rr(0,8));if(isMain){for(let i=0;i<27;i++){let v=rdir(),r=rr(.39,.58)*scale; sphere(add(center,mul(v,r)),rr(.019,.049)*scale,[.45,.83,.99,rr(.3,.8)],1,8,6,rr(0,8));}}
+for(let i=0;i<count;i++)cBranch(center,scale,i,count,isMain);return allPaths.length-baseCount;}
+let mode='offline',liveData=null,ws=null,paused=false,autoOrbit=true,animationTime=0,prevTime=0,lastFPSTime=0,frames=0,quality='high',qfactor=1.35,drag=false,dragStart=null,pinchDist=0,orbitYaw=.48,orbitPitch=.19,radius=12.9,panTarget=[0,0,0],currentVP=null,impulsePool=[];
+let staticPoints=[],edgePaths=[];
+function createDemo(){seed=129831;let out=[];out.push({id:'HZN-N001',center:[0,0,0],scale:1,reps:Array.from({length:+$('repSlider').value},(_,i)=>({id:`REP-${String(i+1).padStart(2,'0')}`,strength:rr(.35,.99)})),activation:.72});
+const loc=[[-6.9,3.3,-4.5],[6.4,3.6,-5.2],[-6.2,-3.9,-5.3],[5.7,-3.9,-4.0]];loc.forEach((p,i)=>out.push({id:'HZN-N00'+(i+2),center:p,scale:.31+(i%2)*.04,reps:Array.from({length:4+i},(_,j)=>({id:'REP-'+String(j+1).padStart(2,'0'),strength:rr(.25,.95)})),activation:rr(.3,.8)}));return out;}
+function refreshGeometry(){seed=18298;geom.P.length=0;geom.N.length=0;geom.C.length=0;geom.R.length=0;geom.I.length=0;bundlePaths=[];allPaths=[];neuronCenters=[];staticPoints=[];let arr=mode==='demo'?createDemo():liveData?.neurons||[];
+ neuronData=arr.map((n,i)=>({id:String(n.id||`N${i}`),center:Array.isArray(n.center)&&n.center.length>=3?n.center:(i===0?[0,0,0]:[Math.cos(i*2.4)*6,Math.sin(i*3.)*4,-3.5]),scale:i===0?1:.32,reps:(n.reps||n.representations||[]).map((r,j)=>typeof r==='string'?({id:r,strength:.5}):({id:String(r.id??`REP-${j+1}`),strength:clamp(Number(r.strength??.5),0,1)})),activation:typeof n.activation==='number'?n.activation:null}));
+ // First render the selected main neuron with correct bundle count, followed by contextual neurons.
+ neuronData.forEach((n,i)=>{const initialGroup=allPaths.length;makeNeuron(n.center,n.scale,Math.min(i===0?32:8,n.reps.length),n.id,i===0);n.pathStart=initialGroup;n.pathEnd=allPaths.length;});
+ // Only actual directed synapses from the inspection snapshot become inter-neuron edges.
+ edgePaths=[];
+ if(mode==='data'&&Array.isArray(liveData?.synapses)){
+ const known=new Map(neuronData.map(n=>[n.id,n]));
+ for(const e of liveData.synapses.slice(0,80)){
+ const source=known.get(String(e.s)),target=known.get(String(e.t));
+ if(!source||!target||source===target)continue;
+ const a=add(source.center,mul(norm(sub(target.center,source.center)),source.scale*.56));
+ const b=sub(target.center,mul(norm(sub(target.center,source.center)),target.scale*.55));
+ const pts=curve(a,b,.09,20),act=clamp(Number(e.activity)||0,0,1);
+ tube(pts,.021+(act*.016),e.inhibitory?[.9,.55,.24,.65]:[.13,.55,.79,.65],0,-1,5);
+ edgePaths.push({path:{points:pts},activity:act,s:String(e.s),t:String(e.t)});
+ }}
+ const position=new Float32Array(geom.P),normal=new Float32Array(geom.N),color=new Float32Array(geom.C),role=new Float32Array(geom.R);let idx=geom.I.length>65535?new Uint32Array(geom.I):new Uint16Array(geom.I);meshCount=idx.length;
+ gl.bindVertexArray(meshVAO);setAttrib(0,meshBuffers[0],position,3);setAttrib(1,meshBuffers[1],normal,3);setAttrib(2,meshBuffers[2],color,4);setAttrib(3,meshBuffers[3],role,1);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,meshBuffers[4]);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,idx,gl.STATIC_DRAW);gl.bindVertexArray(null);refreshGeometry.indexType=idx instanceof Uint32Array?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT;
+ // Dim but abundant suspended particles, and small synaptic-like contact points.
+ for(let i=0;i<390;i++){let p=mul(rdir(),rr(6,21));staticPoints.push({p,size:rr(.45,1.5),c:[rr(.06,.17),rr(.26,.50),rr(.39,.66),rr(.06,.25)]});}
+ for(let k=0;k<allPaths.length;k++){if(rand()<.19){let ps=allPaths[k].points;staticPoints.push({p:ps[ps.length-1],size:rr(1,3),c:rand()>.81?[1,.65,.23,.8]:[.32,.75,1,.3]});}}
+ initPulsePool();updatePanels();}
+function initPulsePool(){impulsePool=[];
+ if(mode==='demo'){let mains=allPaths.filter(x=>x.group>=0),others=allPaths.filter(x=>x.group<0);for(let i=0;i<170;i++){let pool=i<150?mains:others;if(!pool.length)continue;let path=pool[Math.floor(rand()*pool.length)];impulsePool.push({path,t:rand(),speed:rr(.09,.37),size:rr(2,5),decay:rr(.7,1)});}}
+ if(mode==='data'){
+ // SNAPSHOT PROXY: only actual synapse topology and actual measured activation are used.
+ for(const e of edgePaths.filter(e=>e.activity>.035).sort((a,b)=>b.activity-a.activity).slice(0,24)){
+   const n=Math.min(3,Math.max(1,Math.round(e.activity*2)));
+   for(let i=0;i<n;i++)impulsePool.push({path:e.path,t:i/n,speed:.11+.28*e.activity,size:2+3*e.activity,decay:1,oneShot:false});
+ }
+ }}
+function updatePanels(){const first=neuronData.find(x=>x.id===selectedId)||neuronData[0];if(!first){$('nid').textContent='—';$('repNum').textContent='0';$('repCounter').textContent='0';$('neuronNum').textContent='—';$('synNum').textContent='—';$('actNum').textContent='—';$('repList').textContent='Menunggu data neuron Horizon';return;}selectedId=first.id;$('nid').textContent=first.id;$('nsub').textContent=mode==='demo'?'Struktur contoh • bukan brain asli':'Data neural asli · serabut adalah proyeksi komponen vektor';$('repNum').textContent=first.reps.length.toLocaleString('id-ID');$('repCounter').textContent=first.reps.length;$('neuronNum').textContent=neuronData.length+' neuron';$('synNum').textContent=mode==='demo'?'simulasi':String(liveData?.synapses?.length??'tidak tersedia');$('actNum').textContent=first.activation==null?'tidak tersedia':Math.round(first.activation*100)+'%';$('repSlider').disabled=mode!=='demo';$('repControl').style.opacity=mode==='demo'?1:.35;
+const list=$('repList');list.replaceChildren();first.reps.slice(0,200).forEach((rep,i)=>{const row=document.createElement('div');row.className='repr';const dot=document.createElement('i');dot.style.background=i%7===5?'#ffc780':'#68d5ff';const container=document.createElement('div');const name=document.createElement('label');name.textContent=rep.id;const bar=document.createElement('div');bar.className='repbar';const inner=document.createElement('u');inner.style.width=Math.round(rep.strength*100)+'%';bar.append(inner);container.append(name,bar);const val=document.createElement('em');val.textContent=Math.round(rep.strength*100)+'%';row.append(dot,container,val);list.append(row);});}
+let selectedId='HZN-N001';
+function addLiveImpulse(event){const neuron=neuronData.find(n=>n.id===String(event.neuronId??event.neuron_id??''))||neuronData[0];if(!neuron)return;let repIndex=neuron.reps.findIndex(r=>r.id===String(event.representationId??event.representation_id??''));let paths=repIndex>=0&&neuron===neuronData[0]?bundlePaths[repIndex]||[]:allPaths.slice(neuron.pathStart,neuron.pathEnd);if(!paths.length)return;const n=Math.min(15,Math.max(1,Math.round((Number(event.intensity)||.5)*8)));for(let i=0;i<n;i++){let path=paths[Math.floor(Math.random()*paths.length)];impulsePool.push({path,t:0,speed:.20+Math.random()*.20,size:2+Math.random()*5,decay:1,oneShot:true});}if(impulsePool.length>500)impulsePool.splice(0,impulsePool.length-500);}
+function loadSnapshot(input){let data=typeof input==='string'?JSON.parse(input):input;
+ if(!data||!Array.isArray(data.neurons))throw Error('Snapshot neuron tidak valid');
+ if(data.neurons.length>12)throw Error('Visual sampel dibatasi 12 neuron demi performa Android');
+ const previous=selectedId;liveData=data;mode='data';selectedId=data.neurons.some(n=>String(n.id)===previous)?previous:(data.neurons[0]?.id||'');
+ refreshGeometry();} 
+function setSource(label,live){$('sourceLabel').textContent=label;$('source').classList.toggle('live',live);}
+function message(t,isError=false){$('modalMsg').textContent=t;$('modalMsg').classList.toggle('error',isError);}
+function initTargets(w,h){if(initTargets.scene && initTargets.w===w && initTargets.h===h)return;const old=initTargets.all||[];for(const f of old){gl.deleteFramebuffer(f.fbo);gl.deleteTexture(f.tex);if(f.depth)gl.deleteRenderbuffer(f.depth);}function target(tw,th,withDepth=false){const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,tw,th,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);const fbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);let depth=null;if(withDepth){depth=gl.createRenderbuffer();gl.bindRenderbuffer(gl.RENDERBUFFER,depth);gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,tw,th);gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,depth);}return {tex,fbo,depth,tw,th};}const scene=target(w,h,true),bw=Math.max(16,Math.round(w/3)),bh=Math.max(16,Math.round(h/3)),bl1=target(bw,bh),bl2=target(bw,bh);initTargets.scene=scene;initTargets.b1=bl1;initTargets.b2=bl2;initTargets.all=[scene,bl1,bl2];initTargets.w=w;initTargets.h=h;gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
+function resize(){const q=quality==='ultra'?Math.min(devicePixelRatio||1,2):quality==='high'?Math.min(devicePixelRatio||1,1.30):Math.min(devicePixelRatio||1,.85);const maxPixels=quality==='ultra'?3700000:quality==='high'?1700000:800000;let w=Math.max(4,Math.round(innerWidth*q)),h=Math.max(4,Math.round(innerHeight*q));const ratio=Math.min(1,Math.sqrt(maxPixels/(w*h)));w=Math.round(w*ratio);h=Math.round(h*ratio);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}initTargets(w,h);}
+function pathAt(ps,t){let z=clamp(t,0,.99999)*(ps.length-1),i=Math.floor(z),f=z-i;return add(mul(ps[i],1-f),mul(ps[Math.min(i+1,ps.length-1)],f));}
+function renderPoints(dt){const P=[],C=[],S=[];for(const o of staticPoints){P.push(...o.p);C.push(...o.c);S.push(o.size);}let count=0;for(let i=impulsePool.length-1;i>=0;i--){let p=impulsePool[i];if(!paused){p.t+=dt*p.speed*.84*speed;}
+if(p.t>1){if(mode==='demo')p.t%=1;else{impulsePool.splice(i,1);continue;}}
+const pos=pathAt(p.path.points,p.t);const bright=p.oneShot?Math.sin(PI*p.t)*.8+.2:1;P.push(...pos);C.push(1,.62+.28*Math.sin(i*1.7)**2,.25,bright*.96);S.push(p.size*1.35);count++;
+// Trailing luminous charge down the same fiber, directed by actual path parametrization.
+for(let k=1;k<=3;k++){const t=p.t-k*.015;if(t<0)break;P.push(...pathAt(p.path.points,t));C.push(1,.39+.11*k,.19,bright*.35*(1-k/4));S.push(p.size*(1-k*.19));}}
+$('impNum').textContent=count.toLocaleString('id-ID');pointCount=S.length;gl.bindVertexArray(pointVAO);setPointBuffer(0,new Float32Array(P),3);setPointBuffer(1,new Float32Array(C),4);setPointBuffer(2,new Float32Array(S),1);gl.bindVertexArray(null);}
+function drawQuad(target,shader,tex0,tex1,dir){gl.bindFramebuffer(gl.FRAMEBUFFER,target?.fbo||null);gl.viewport(0,0,target?.tw||canvas.width,target?.th||canvas.height);gl.disable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.useProgram(shader);gl.bindVertexArray(quadVAO);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex0);gl.uniform1i(gl.getUniformLocation(shader,'t0'),0);if(tex1){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,tex1);gl.uniform1i(gl.getUniformLocation(shader,'t1'),1);}if(shader===blurP){gl.uniform2f(gl.getUniformLocation(shader,'texel'),1/initTargets.b1.tw,1/initTargets.b1.th);gl.uniform2f(gl.getUniformLocation(shader,'direction'),dir[0],dir[1]);}if(shader===compP)gl.uniform1f(gl.getUniformLocation(shader,'bloom'),quality==='eco'?.73:1.30);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);gl.bindVertexArray(null);}
+function render(ts){requestAnimationFrame(render);if(!prevTime)prevTime=ts;const dt=clamp((ts-prevTime)/1000,0,.08);prevTime=ts;if(!paused){animationTime+=dt;if(autoOrbit && !drag)orbitYaw+=dt*.061;}
+resize();gl.bindFramebuffer(gl.FRAMEBUFFER,initTargets.scene.fbo);gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.002,.011,.027,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);gl.disable(gl.BLEND);
+const eye=add(panTarget,[Math.sin(orbitYaw)*Math.cos(orbitPitch)*radius,Math.sin(orbitPitch)*radius,Math.cos(orbitYaw)*Math.cos(orbitPitch)*radius]);const proj=perspective(PI/3.15,canvas.width/canvas.height,.10,100),view=lookAt(eye,panTarget),vp=matMul(proj,view);currentVP=vp;
+gl.useProgram(meshP);gl.uniformMatrix4fv(gl.getUniformLocation(meshP,'uVP'),false,vp);gl.uniform1f(gl.getUniformLocation(meshP,'uTime'),animationTime);gl.uniform1f(gl.getUniformLocation(meshP,'uGlow'),0);gl.bindVertexArray(meshVAO);gl.drawElements(gl.TRIANGLES,meshCount,refreshGeometry.indexType,0);gl.bindVertexArray(null);
+renderPoints(dt);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);gl.depthMask(false);gl.useProgram(pointP);gl.uniformMatrix4fv(gl.getUniformLocation(pointP,'uVP'),false,vp);gl.uniform2f(gl.getUniformLocation(pointP,'uSize'),canvas.width,canvas.height);gl.uniform1f(gl.getUniformLocation(pointP,'uScale'),quality==='eco'?.8:1.55);gl.bindVertexArray(pointVAO);gl.drawArrays(gl.POINTS,0,pointCount);gl.bindVertexArray(null);gl.depthMask(true);gl.disable(gl.BLEND);
+// Multiscale bloom: extract bright surfaces, gaussian blur X and Y, tone-map composite.
+drawQuad(initTargets.b1,brightP,initTargets.scene.tex);drawQuad(initTargets.b2,blurP,initTargets.b1.tex,null,[1,0]);drawQuad(initTargets.b1,blurP,initTargets.b2.tex,null,[0,1]);drawQuad(null,compP,initTargets.scene.tex,initTargets.b1.tex);
+frames++;if(ts-lastFPSTime>1600){let fps=Math.round(frames*1000/(ts-lastFPSTime||1000));$('fps').textContent=`WEBGL2 · ${quality.toUpperCase()} · ${fps} FPS · ${canvas.width} × ${canvas.height}`;lastFPSTime=ts;frames=0;}
+}
+// Camera: pointer orbit + pinch zoom, mouse wheel and neuron picking.
+let pressTime=0,pointers=new Map();canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);dragStart=[e.clientX,e.clientY];pressTime=performance.now();drag=true;if(pointers.size===2){let v=[...pointers.values()];pinchDist=Math.hypot(v[0][0]-v[1][0],v[0][1]-v[1][1]);}});
+canvas.addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId))return;const prev=pointers.get(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);if(pointers.size===1){orbitYaw-=(e.clientX-prev[0])*.006;orbitPitch=clamp(orbitPitch+(e.clientY-prev[1])*.005,-1.37,1.37);}else if(pointers.size===2){let v=[...pointers.values()],newDist=Math.hypot(v[0][0]-v[1][0],v[0][1]-v[1][1]);if(pinchDist>0)radius=clamp(radius*pinchDist/(newDist||pinchDist),3,32);pinchDist=newDist;}});
+function pointerStop(e){if(!pointers.has(e.pointerId))return;pointers.delete(e.pointerId);if(pointers.size===0){drag=false;let moved=dragStart?Math.hypot(e.clientX-dragStart[0],e.clientY-dragStart[1]):99;if(moved<9&&performance.now()-pressTime<460)pickNeuron(e.clientX,e.clientY);}}
+canvas.addEventListener('pointerup',pointerStop);canvas.addEventListener('pointercancel',pointerStop);canvas.addEventListener('wheel',e=>{e.preventDefault();radius=clamp(radius*Math.exp(e.deltaY*.0008),3,32);},{passive:false});
+function pickNeuron(x,y){if(!currentVP)return;let best=null,dmin=55;for(const n of neuronData){const p=transformed(n.center,currentVP);if(p[2]<-1||p[2]>1)continue;const cx=(p[0]+1)*innerWidth/2,cy=(1-p[1])*innerHeight/2,d=Math.hypot(x-cx,y-cy);if(d<dmin){dmin=d;best=n;}}if(best){selectedId=best.id;updatePanels();}}
+$('repSlider').addEventListener('input',e=>{if(mode!=='demo')return;$('repLabel').textContent=e.target.value;selectedId='HZN-N001';refreshGeometry();});let speed=1;$('speedSlider').addEventListener('input',e=>{speed=Number(e.target.value)/100;$('speedLabel').textContent=speed.toFixed(1)+'×';});
+$('playBtn').onclick=()=>{paused=!paused;$('playBtn').innerText=paused?'▶  Lanjut':'Ⅱ  Jeda';$('playBtn').classList.toggle('active',paused);};$('orbitBtn').onclick=()=>{autoOrbit=!autoOrbit;$('orbitBtn').classList.toggle('active',autoOrbit);};$('uiBtn').onclick=()=>document.body.classList.toggle('minimal');$('quality').onchange=e=>{quality=e.target.value;initTargets.w=0;resize();};$('shotBtn').onclick=()=>{canvas.toBlob(blob=>{if(!blob)return;const a=document.createElement('a'),url=URL.createObjectURL(blob);a.href=url;a.download='Horizon-Neural-3D-'+Date.now()+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);},'image/png');};
+$('dataBtn').onclick=()=>$('modalwrap').classList.add('open');$('closeModal').onclick=()=>$('modalwrap').classList.remove('open');$('modalwrap').onclick=e=>{if(e.target.id==='modalwrap')$('modalwrap').classList.remove('open');};
+$('connectBtn').onclick=()=>{demoLock=false;syncBridge();$('modalwrap').classList.remove('open');};
+$('demoBtn').onclick=()=>{demoLock=true;liveData=null;mode='demo';selectedId='HZN-N001';refreshGeometry();setSource('DEMO / BUKAN DATA HORIZON',false);$('bridgeFoot').textContent='DEMO: neuron, serabut, dan impuls adalah simulasi';$('modalwrap').classList.remove('open');};
+window.addEventListener('keydown',e=>{if(e.key==='Escape')$('modalwrap').classList.remove('open');if(e.code==='Space'&&e.target.tagName!=='TEXTAREA'&&e.target.tagName!=='INPUT'){e.preventDefault();$('playBtn').click();}});
+// Passive, bounded, read-only polling of the actual Horizon Go Bridge through Kotlin.
+// Never fabricate neural data on HTTP error and never claim packets that do not exist.
+let demoLock=false,polling=false,refreshTimer=null,lastRevision=-1;
+function scheduleRefresh(ms){if(refreshTimer)clearTimeout(refreshTimer);refreshTimer=setTimeout(syncBridge,ms);}
+function projectCenter(v,i){if(i===0)return [0,0,0];
+ let q=[0,0,0],sum=0;for(let j=0;j<v.length;j++){let a=Number(v[j])||0;sum+=a*a;q[0]+=a*Math.sin((j+1)*2.31);q[1]+=a*Math.cos((j+1)*1.73);q[2]+=a*Math.sin((j+1)*3.19);}
+ const h=(Math.sqrt(sum)||1)*Math.sqrt(Math.max(1,v.length));
+ const angle=i*2.39996,ring=5.8+Math.floor(i/5)*1.3;
+ return [Math.cos(angle)*ring+q[0]/h,Math.sin(angle)*ring*.58+q[1]/h,-3.8+Math.sin(i*1.8)+q[2]/h];}
+function fromBridge(data){
+ if(!data||data.status!=='ok'||data.brain_identity!=='horizon-primary-brain'||!Array.isArray(data.nodes)||!Array.isArray(data.edges))throw Error('Kontrak inspeksi Bridge tidak valid');
+ if(!Number.isSafeInteger(Number(data.state_revision))||Number(data.state_revision)<0)throw Error('Revisi brain tidak valid');
+ const nodes=data.nodes.slice(0,9),ids=new Set(nodes.map(n=>String(n.id)));
+ const neurons=nodes.map((n,i)=>{let vector=Array.isArray(n.representation)?n.representation:[];
+  return {id:String(n.id),activation:Number.isFinite(+n.activation)?Math.max(0,Math.min(1,+n.activation)):0,
+   center:projectCenter(vector,i),
+   representations:vector.slice(0,40).map((value,j)=>({id:'VECTOR['+j+']',strength:Math.abs(Number(value)||0)/(1+Math.abs(Number(value)||0))}))};});
+ const synapses=data.edges.filter(e=>ids.has(String(e.s))&&ids.has(String(e.t))).slice(0,80).map(e=>({
+  s:String(e.s),t:String(e.t),inhibitory:Boolean(e.inhibitory),
+  activity:Math.max(0,Math.min(1,Math.max(+e.activation||0,+e.dynamic_activation||0,
+    Math.abs(+e.w||0)*Math.max(0,+e.conf||0)*Math.max(0,neurons.find(n=>n.id===String(e.s))?.activation||0))))}));
+ return {neurons,synapses,counts:data.counts||{},revision:Number(data.state_revision),capture:data.captured_at||'',retrieved:data.retrieved_at||0};
+}
+async function syncBridge(){
+ if(polling)return;
+ if(document.hidden){scheduleRefresh(5000);return;}
+ if(demoLock){scheduleRefresh(8000);return;}
+ polling=true;const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),12500);
+ try{
+  const response=await fetch('/api/graph',{cache:'no-store',headers:{Accept:'application/json'},signal:controller.signal});
+  if(!response.ok){let detail='';try{detail=(await response.json()).message||'';}catch(e){}throw Error('Bridge HTTP '+response.status+(detail?': '+detail:''));}
+  const json=await response.json(),snap=fromBridge(json);
+  loadSnapshot(snap);lastRevision=snap.revision;
+  const total=json.counts?.neural_units??'?',edges=json.counts?.synapses??'?';
+  setSource('HORIZON LIVE · REV '+snap.revision,true);
+  const description=`Revisi ${snap.revision} · ${snap.neurons.length}/${total} neuron tampak · ${snap.synapses.length}/${edges} sinaps sampel · snapshot diperbarui berkala (bukan event spike)`;
+  $('bridgeFoot').textContent=description;$('bridgeStatus').textContent=description;
+  message('Berhasil membaca revisi '+snap.revision+' dari Bridge Horizon.');
+ }catch(err){setSource('OFFLINE / DATA TIDAK SEGAR',false);const reason='Bridge tidak tersedia: '+(err?.message||'gagal mengambil data');$('bridgeFoot').textContent=reason;$('bridgeStatus').textContent=reason;message(reason,true);
+ }finally{clearTimeout(timeout);polling=false;scheduleRefresh(document.hidden?6000:3500);}
+}
+setSource('OFFLINE / MENUNGGU DATA',false);refreshGeometry();resize();requestAnimationFrame(render);syncBridge();
+})();
+</script>
+</body>
+</html>
